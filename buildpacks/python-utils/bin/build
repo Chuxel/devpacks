@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DEFAULT_UTILS=("pylint" "flake8" "autopep8" "black" "yapf" "mypy" "pydocstyle" "pycodestyle" "bandit" "pipenv" "virtualenv")
+LAYER_NAME="python-utils"
+
+layers_dir="$1"
+env_dir="$2/env"
+plan_path="$3"
+
+buildpack_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+python_install_path="$(dirname "$(which python)")"
+py_utils_path="${layers_dir}/${LAYER_NAME}"
+mkdir -p "${py_utils_path}"
+
+# Install tools
+echo "Installing Python tools..."
+export PIPX_HOME="${py_utils_path}"
+export PIPX_BIN_DIR="${py_utils_path}/bin"
+export PATH="${PIPX_BIN_DIR}:${PATH}"
+export PYTHONUSERBASE=/tmp/pip-tmp
+export PIP_CACHE_DIR=/tmp/pip-tmp/cache
+pipx_path=""
+if ! type pipx > /dev/null 2>&1; then
+    python3 -m pip install --no-cache-dir --user pipx 2>&1
+    /tmp/pip-tmp/bin/pipx install --pip-args=--no-cache-dir pipx
+    pipx_path="/tmp/pip-tmp/bin/"
+fi
+for util in ${DEFAULT_UTILS[@]}; do
+    if ! type ${util} > /dev/null 2>&1; then
+        ${pipx_path}pipx install --system-site-packages --pip-args '--no-cache-dir --force-reinstall' ${util}
+    else
+        echo "${util} already installed. Skipping."
+    fi
+done
+
+rm -rf /tmp/pip-tmp
+
+py_utils_path="${layers_dir}/py-utils"
+
+cat "${buildpack_root}/assets/layer.toml" > "${layers_dir}/${LAYER_NAME}.toml"
+
+exit 0

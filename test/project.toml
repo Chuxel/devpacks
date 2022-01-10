@@ -1,0 +1,10 @@
+[project]
+  id = "com.visualstudio.code.devcontainers.test"
+  name = "Dev Container Dependencies Test"
+  version = "1.0.0"
+
+[build]
+  exclude = ["*"]
+  [[build.env]]
+    name = 'BP_CPYTHON_VERSION'
+    value = '3.7.*' # any valid semver constraints (e.g. 3.6.7, 3.*) are acceptable

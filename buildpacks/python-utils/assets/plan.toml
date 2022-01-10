@@ -1,0 +1,5 @@
+[[requires]]
+  name = "cpython"
+  [requires.metadata]
+    build = true
+    launch = true
