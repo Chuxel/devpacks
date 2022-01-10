@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEFAULT_UTILS=("pylint" "flake8" "autopep8" "black" "yapf" "mypy" "pydocstyle" "pycodestyle" "bandit" "pipenv" "virtualenv")
+DEFAULT_UTILS=("pylint==2.12.2" "flake8==4.0.1" "autopep8==1.6.0" "black==21.12b0" "yapf==0.32.0" "mypy==0.931" "pydocstyle==6.1.1" "pycodestyle==2.8.0" "bandit==1.7.1" "pipenv==2022.1.8" "virtualenv==20.13.0")
 LAYER_NAME="python-utils"
 
 layers_dir="$1"
@@ -11,10 +11,19 @@ plan_path="$3"
 buildpack_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 python_install_path="$(dirname "$(which python)")"
 py_utils_path="${layers_dir}/${LAYER_NAME}"
-mkdir -p "${py_utils_path}"
+
+# For caching, only reuse if the exact same version of python is detected
+cache_string="$(python --version 2>&1) ${DEFAULT_UTILS[@]}"
+if [ -e "${py_utils_path}/cache_metadata" ] && [ "$(cat "${py_utils_path}/cache_metadata")" = "${cache_string}" ]; then
+    echo "Reusing python utils layer"
+    cat "${buildpack_root}/assets/layer.toml" > "${layers_dir}/${LAYER_NAME}.toml"
+    exit 0
+fi
+rm -rf "${py_utils_path}"
 
 # Install tools
 echo "Installing Python tools..."
+mkdir -p "${py_utils_path}"
 export PIPX_HOME="${py_utils_path}"
 export PIPX_BIN_DIR="${py_utils_path}/bin"
 export PATH="${PIPX_BIN_DIR}:${PATH}"
@@ -36,8 +45,7 @@ done
 
 rm -rf /tmp/pip-tmp
 
-py_utils_path="${layers_dir}/py-utils"
-
+echo "${cache_string}" > "${py_utils_path}/cache_metadata"
 cat "${buildpack_root}/assets/layer.toml" > "${layers_dir}/${LAYER_NAME}.toml"
 
 exit 0
