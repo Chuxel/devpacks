@@ -7,18 +7,16 @@ import (
 	"github.com/buildpacks/libcnb"
 )
 
-type BaseDetector struct {
-	// Implements libcnb.Detector
-	// Detect(context libcnb.DetectContext) (libcnb.DetectResult, error)
+type DefaultDetector interface {
+	libcnb.Detector
 
-	// Overridable methods
-	// DoDetect(context libcnb.DetectContext) (bool, map[string]interface{}, error)
-	// Name() string
-	// AlwaysPass() bool
+	Name() string
+	AlwaysPass() bool
+	DoDetect(context libcnb.DetectContext) (bool, map[string]interface{}, error)
 }
 
 // Implementation of libcnb.Detector.Detect
-func (detector BaseDetector) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) {
+func DefaultDetect(detector DefaultDetector, context libcnb.DetectContext) (libcnb.DetectResult, error) {
 	log.Println("Devpack path:", context.Buildpack.Path)
 	log.Println("Application path:", context.Application.Path)
 	log.Println("Env:", os.Environ())
@@ -28,26 +26,24 @@ func (detector BaseDetector) Detect(context libcnb.DetectContext) (libcnb.Detect
 	if err != nil {
 		return result, err
 	}
-	// Add a plan that either provides nothing (so we don't get an error about
-	// no require for something provided) and one that provides itself.
-	result.Plans = []libcnb.BuildPlan{
-		libcnb.BuildPlan{
-			Provides: []libcnb.BuildPlanProvide{},
-			Requires: []libcnb.BuildPlanRequire{},
-		},
-	}
+	result.Plans = []libcnb.BuildPlan{}
 	if detected {
 		result.Plans = append(result.Plans,
 			libcnb.BuildPlan{
-				Provides: []libcnb.BuildPlanProvide{libcnb.BuildPlanProvide{Name: detector.Name()}},
-				Requires: []libcnb.BuildPlanRequire{libcnb.BuildPlanRequire{Name: detector.Name(), Metadata: metadata}},
+				Provides: []libcnb.BuildPlanProvide{{Name: detector.Name()}},
+				Requires: []libcnb.BuildPlanRequire{{Name: detector.Name(), Metadata: metadata}},
 			},
 		)
-
 	} else if detector.AlwaysPass() {
+		// Add a plan that either provides nothing (so we don't get an error about
+		// no require for something provided) and one that provides itself.
 		result.Plans = append(result.Plans,
 			libcnb.BuildPlan{
-				Provides: []libcnb.BuildPlanProvide{libcnb.BuildPlanProvide{Name: detector.Name()}},
+				Provides: []libcnb.BuildPlanProvide{},
+				Requires: []libcnb.BuildPlanRequire{},
+			},
+			libcnb.BuildPlan{
+				Provides: []libcnb.BuildPlanProvide{{Name: detector.Name()}},
 				Requires: []libcnb.BuildPlanRequire{},
 			},
 		)
@@ -56,20 +52,4 @@ func (detector BaseDetector) Detect(context libcnb.DetectContext) (libcnb.Detect
 	result.Pass = detector.AlwaysPass() || detected
 
 	return result, nil
-}
-
-// Intended to be overridden
-func (detector BaseDetector) Name() string {
-	return "base"
-}
-
-// Intended to be overridden
-func (detector BaseDetector) AlwaysPass() bool {
-	return true
-}
-
-// Intended to be overridden
-func (detector BaseDetector) DoDetect(context libcnb.DetectContext) (bool, map[string]interface{}, error) {
-	var metadata map[string]interface{}
-	return true, metadata, nil
 }

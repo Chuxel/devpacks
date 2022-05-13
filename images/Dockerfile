@@ -97,8 +97,11 @@ RUN apt-get update \
 
 #  ******* Dev container "build" image  *******
 FROM build as devcontainer-build
-# Set the devpack build mode to devcontainer
-RUN echo 'devcontainer' > "/usr/local/etc/dev-container-features/dcnb-build-mode"
+RUN --mount=target=/scripts,source=./scripts,type=bind,ro \
+    # Set the devpack build mode to devcontainer
+    echo 'devcontainer' > "/usr/local/etc/dev-container-features/dcnb-build-mode" \
+    # Work around the fact that any "exec" calls to the container will not get the launcher's env by default
+    &&  bash /scripts/launcher-hack.sh
 
 #  ******* Dev container "run" image  *******
 FROM devcontainer-build as devcontainer-run

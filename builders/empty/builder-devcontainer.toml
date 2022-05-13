@@ -1,13 +1,6 @@
-[[buildpacks]]
-  id = "${publisher}/${featureset}/mode/devcontainer"
-  uri = "${toml_dir}/../../modepacks/devcontainer"
-
 [[order]]
-
-    [[order.group]]
-      id = "${publisher}/${featureset}/mode/devcontainer"
 
 [stack]
   id = "io.buildpacks.stacks.bionic"
-  run-image = "ghcr.io/${publisher}/${featureset}/stack-devcontainer-run-image"
-  build-image = "ghcr.io/${publisher}/${featureset}/stack-devcontainer-build-image"
+  run-image = "ghcr.io/${publisher}/${buildpack_set}/stack-devcontainer-run-image"
+  build-image = "ghcr.io/${publisher}/${buildpack_set}/stack-devcontainer-build-image"

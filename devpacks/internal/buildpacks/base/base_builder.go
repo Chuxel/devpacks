@@ -10,16 +10,14 @@ import (
 	"github.com/chuxel/devpacks/internal/common"
 )
 
-type BaseBuilder struct {
-	// Implements libcnb.Builder
-	// Build(context libcnb.BuildContext) (libcnb.BuildResult, error)
+type DefaultBuilder interface {
+	libcnb.Builder
 
-	// Name() string
-	// NewLayerContributor(buildMode string, layerTypes libcnb.LayerTypes, context libcnb.BuildContext) libcnb.BaseLayerContributor
+	Name() string
+	NewLayerContributor(buildMode string, layerTypes libcnb.LayerTypes, context libcnb.BuildContext) libcnb.LayerContributor
 }
 
-// Implementation of libcnb.Builder.Build
-func (builder BaseBuilder) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
+func DefaultBuild(builder DefaultBuilder, context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	buildMode := common.ContainerImageBuildMode()
 	log.Println("Devpack path:", context.Buildpack.Path)
 	log.Println("Application path:", context.Application.Path)
@@ -63,15 +61,4 @@ func (builder BaseBuilder) Build(context libcnb.BuildContext) (libcnb.BuildResul
 	log.Printf("Unmet entries: %d", len(result.Unmet))
 
 	return result, nil
-}
-
-// Intended to be overridden
-func (builder BaseBuilder) Name() string {
-	return "base"
-}
-
-// Intended to be overridden
-func (builder BaseBuilder) NewLayerContributor(buildMode string, layerTypes libcnb.LayerTypes, context libcnb.BuildContext) libcnb.LayerContributor {
-	var contrib libcnb.LayerContributor
-	return contrib
 }

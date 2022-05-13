@@ -1,0 +1,15 @@
+[[entries]]
+  name = "chuxel/devpack/nodejs"
+  [entries.metadata]
+    build = true
+    cache = false
+    launch = false
+
+[[entries]]
+  name = "chuxel/devcontainer-features/packcli"
+  [entries.metadata]
+    build = true
+    launch = true
+
+[[entries]]
+  name = "some-unmet-dependency"

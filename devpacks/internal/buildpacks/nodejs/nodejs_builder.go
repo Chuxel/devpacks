@@ -24,20 +24,26 @@ var featureJsonBytes []byte
 var nodeIndexJsonBytes []byte
 
 type NodeJsRuntimeBuilder struct {
-	base.BaseBuilder
+	// Implements base.DefaultBuilder
 
+	// Build(context libcnb.BuildContext) (libcnb.BuildResult, error)
 	// Name() string
 	// NewLayerContributor(buildMode string, layerTypes libcnb.LayerTypes, context libcnb.BuildContext) libcnb.BaseLayerContributor
 }
 
 type NodeJsRuntimeLayerContributor struct {
 	// Implements libcnb.LayerContributor
+
 	// Contribute(context libcnb.ContributeContext) (libcnb.Layer, error)
 	// Name() string
 
 	LayerTypes libcnb.LayerTypes
 	Context    libcnb.BuildContext
 	BuildMode  string
+}
+
+func (builder NodeJsRuntimeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
+	return base.DefaultBuild(builder, context)
 }
 
 // Implementation of base.BaseBuilder.Name

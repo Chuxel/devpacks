@@ -2,13 +2,9 @@
 set -e
 export DOCKER_BUILDKIT=1
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-devcontainer_features_dir="${script_dir}/../devcontainer-features"
 publish="${1:-false}"
 
-publisher="$(jq -r '.publisher' "${devcontainer_features_dir}"/devpack-settings.json)"
-featureset_name="$(jq -r '.featureSet' "${devcontainer_features_dir}"/devpack-settings.json)"
-version="$(jq -r '.version' "${devcontainer_features_dir}"/devpack-settings.json)"
-uri_prefix="ghcr.io/${publisher}/${featureset_name}"
+uri_prefix="ghcr.io/chuxel/devpacks"
 
 build_stack_images() {
     prefix=""
