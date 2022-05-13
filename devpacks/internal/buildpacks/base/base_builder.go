@@ -10,26 +10,17 @@ import (
 	"github.com/chuxel/devpacks/internal/common"
 )
 
-const NODEJS_RUNTIME_BUILDPACK_NAME = "nodejs_runtime"
-
 type BaseBuilder struct {
 	// Implements libcnb.Builder
 	// Build(context libcnb.BuildContext) (libcnb.BuildResult, error)
 
-	ContributorType reflect.Type
-}
-
-type BaseLayerContributor interface {
-	libcnb.LayerContributor
-	// Contribute(context libcnb.ContributeContext) (libcnb.Layer, error)
 	// Name() string
-
-	ApplyBuilderSettings(layerTypes libcnb.LayerTypes, context libcnb.BuildContext)
+	// NewLayerContributor(buildMode string, layerTypes libcnb.LayerTypes, context libcnb.BuildContext) libcnb.BaseLayerContributor
 }
 
 // Implementation of libcnb.Builder.Build
 func (builder BaseBuilder) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
-	buildMode := common.GetContainerImageBuildMode()
+	buildMode := common.ContainerImageBuildMode()
 	log.Println("Devpack path:", context.Buildpack.Path)
 	log.Println("Application path:", context.Application.Path)
 	log.Println("Build mode:", buildMode)
@@ -40,7 +31,7 @@ func (builder BaseBuilder) Build(context libcnb.BuildContext) (libcnb.BuildResul
 
 	overrideLayerTypes := map[string]bool{}
 	for _, entry := range context.Plan.Entries {
-		if entry.Name != NODEJS_RUNTIME_BUILDPACK_NAME {
+		if entry.Name != builder.Name() {
 			// If the entry is for this buildpack, merge values of any layer type overrides set in the entry's metadata
 			for _, key := range []string{"Build", "Launch", "Cache"} {
 				entryValue, containsKey := entry.Metadata[strings.ToLower(key)]
@@ -65,13 +56,22 @@ func (builder BaseBuilder) Build(context libcnb.BuildContext) (libcnb.BuildResul
 		field.Set(reflect.ValueOf(value))
 	}
 
-	layerContributorPtr := reflect.New(builder.ContributorType)
-	layerContributor := layerContributorPtr.Elem().Interface().(BaseLayerContributor)
-	layerContributor.ApplyBuilderSettings(layerTypes, context)
-	result.Layers = append(result.Layers, layerContributor)
+	// Use reflection to create a contributor based on the type assigned to the builder
+	result.Layers = append(result.Layers, builder.NewLayerContributor(common.ContainerImageBuildMode(), layerTypes, context))
 
 	log.Printf("Number of layer contributors: %d", len(result.Layers))
 	log.Printf("Unmet entries: %d", len(result.Unmet))
 
 	return result, nil
+}
+
+// Intended to be overridden
+func (builder BaseBuilder) Name() string {
+	return "base"
+}
+
+// Intended to be overridden
+func (builder BaseBuilder) NewLayerContributor(buildMode string, layerTypes libcnb.LayerTypes, context libcnb.BuildContext) libcnb.LayerContributor {
+	var contrib libcnb.LayerContributor
+	return contrib
 }

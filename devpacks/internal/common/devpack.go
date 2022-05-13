@@ -36,7 +36,7 @@ func (dp *DevpackSettings) Load(featuresPath string) {
 	}
 }
 
-func GetContainerImageBuildMode() string {
+func ContainerImageBuildMode() string {
 	if cachedContainerImageBuildMode != "" {
 		return cachedContainerImageBuildMode
 	}

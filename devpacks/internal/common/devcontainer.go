@@ -35,10 +35,10 @@ func loadDevContainerJsonConent(applicationFolder string) ([]byte, string) {
 	return content, devContainerJsonPath
 }
 
-func (devContainerJson *DevContainer) Load(applicationFolder string) string {
+func (devContainer *DevContainer) Load(applicationFolder string) string {
 	content, devContainerJsonPath := loadDevContainerJsonConent(applicationFolder)
 	if devContainerJsonPath != "" {
-		err := json.Unmarshal(content, devContainerJson.Properties)
+		err := json.Unmarshal(content, devContainer.Properties)
 		if err != nil {
 			log.Fatal(err)
 		}
