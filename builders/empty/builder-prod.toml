@@ -1,0 +1,6 @@
+[[order]]
+
+[stack]
+  id = "io.buildpacks.stacks.bionic"
+  run-image = "ghcr.io/${publisher}/${featureset}/stack-run-image"
+  build-image = "ghcr.io/${publisher}/${featureset}/stack-build-image"

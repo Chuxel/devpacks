@@ -1,22 +1,32 @@
 {
-	"name": "Buildpack development",
-	"image": "mcr.microsoft.com/vscode/devcontainers/base:focal",
-
-	// Set *default* container specific settings.json values on container create.
-	"settings": {},
-
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": ["tamasfe.even-better-toml"],
-
+	"name": "manual-devpacks",
+	"image": "mcr.microsoft.com/vscode/devcontainers/base:0-bullseye",
+	"runArgs": ["--shm-size=1g"],
+	"extensions": [
+		"mads-hartmann.bash-ide-vscode",
+		"rogalmic.bash-debug",
+		"ms-azuretools.vscode-docker",
+		"EditorConfig.EditorConfig",
+		"streetsidesoftware.code-spell-checker"
+	],
+	"forwardPorts": [6080],
+	"portsAttributes": {
+		"6080": {
+			"label": "Desktop web client",
+			"onAutoForward": "ignore"
+		}
+	},
+	"remoteUser": "vscode",
 	"features": {
 		"docker-in-docker": "latest",
-		"github-cli": "latest",
-		"azure-cli": "latest",
+		"desktop-lite": "latest",
+		"golang": "1.17.6",
 		"node": "16",
-		"golang": "1.17",
-		"chuxel/devcontainer-features/packcli": "latest"
+		"chuxel/devcontainer-features/packcli": "latest",
+		"chuxel/devcontainer-features/vscode": {
+			"edition": "both"
+		},
+		"chuxel/devcontainer-features/googlechrome": "latest"
 	},
-
-	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-	"remoteUser": "vscode"
+	//"postCreateCommand": ". /usr/local/share/nvm/nvm.sh && npm install -g @vscode/dev-container-cli"
 }
