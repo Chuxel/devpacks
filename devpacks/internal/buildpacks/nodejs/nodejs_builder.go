@@ -8,9 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"regexp"
 	"runtime"
-	"strings"
 
 	"github.com/blang/semver/v4"
 	"github.com/buildpacks/libcnb"
@@ -180,69 +178,7 @@ func findRealNodeVersion(requestedVersion string) string {
 	semver.Sort(nodeVersions)
 
 	if requestedVersion != "latest" {
-		// Convert node shorthands to semver.Range string
-		requestedVersion = strings.ReplaceAll(requestedVersion, "*", "x")
-		// 18.1.2 - 18.3.2 is >=18.1.2 <=18.3.2
-		exp := regexp.MustCompile(`[0-9x]+(\.[^ ]+)? - [0-9x]+`)
-		rangeLocs := exp.FindAllStringIndex(requestedVersion, -1)
-		if rangeLocs != nil {
-			for _, loc := range rangeLocs {
-				requestedVersion = requestedVersion[:loc[0]] + ">=" + requestedVersion[loc[0]:]
-			}
-			requestedVersion = strings.ReplaceAll(requestedVersion, " - ", " <=")
-		}
-		// Handle ^ and ~
-		hasCarrotOrTilde, _ := regexp.MatchString("(^|~)", requestedVersion)
-		if hasCarrotOrTilde {
-			semverRange := ""
-			rangeParts := strings.Split(requestedVersion, " ")
-			for _, part := range rangeParts {
-				if part[0] == '~' {
-					// ~18.1.2 is >=18.1.2 <18.2.0
-					semverRange += ">=" + part[1:]
-					tempVersion, err := semver.ParseTolerant(part[1:])
-					if err != nil {
-						log.Fatal(err)
-					}
-					tempVersion.IncrementMinor()
-					tempVersion.Patch = 0
-					semverRange += " <" + tempVersion.FinalizeVersion() + " "
-				} else if part[0] == '^' {
-					// ^18.1.2 is >=18.1.2 <19.0.0
-					semverRange += ">=" + part[1:] + " "
-					tempVersion, err := semver.ParseTolerant(part[1:])
-					if err != nil {
-						log.Fatal(err)
-					}
-					tempVersion.IncrementMajor()
-					tempVersion.Minor = 0
-					tempVersion.Patch = 0
-					semverRange += " <" + tempVersion.FinalizeVersion() + " "
-				} else {
-					semverRange += part + " "
-				}
-			}
-			requestedVersion = semverRange
-		}
-		// 18 is 18.x.x, 18.1 is 18.1.x
-		expX := regexp.MustCompile(`[!=>< ][0-9x]+(\.[0-9x]+)? `)
-		requestedVersion = " " + requestedVersion + " "
-		for {
-			loc := expX.FindStringIndex(requestedVersion)
-			if loc == nil {
-				break
-			}
-			version := requestedVersion[loc[0]+1 : loc[1]-1]
-			if strings.Contains(version, ".") {
-				version = version + ".x"
-			} else {
-				version = version + ".x.x"
-			}
-			requestedVersion = requestedVersion[:loc[0]+1] + version + requestedVersion[loc[1]-1:]
-		}
-
-		log.Println("Matching node version", requestedVersion)
-		expectedRange := semver.MustParseRange(requestedVersion)
+		expectedRange := common.NewSemverRange(requestedVersion)
 		// Sorted in ascending order, so run through in reverse order to get the latest matching
 		for i := len(nodeVersions) - 1; i >= 0; i-- {
 			nodeVersion := nodeVersions[i]
