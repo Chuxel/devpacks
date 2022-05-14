@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"regexp"
 	"runtime"
+	"strings"
 
 	"github.com/blang/semver/v4"
 	"github.com/buildpacks/libcnb"
@@ -63,9 +65,9 @@ func (contrib NodeJsRuntimeLayerContributor) Name() string {
 
 // Implementation of libcnb.LayerContributor.Contribute
 func (contrib NodeJsRuntimeLayerContributor) Contribute(layer libcnb.Layer) (libcnb.Layer, error) {
+
 	// Version of Node.js to download
-	// Defaults to Node 18
-	requestedVersion := "^18.0.0"
+	requestedVersion := "^18.1.0"
 
 	//TODO: Set nodejs version based on BP_ env var if set
 
@@ -83,7 +85,7 @@ func (contrib NodeJsRuntimeLayerContributor) Contribute(layer libcnb.Layer) (lib
 		if err := json.Unmarshal(content, &packageJson); err != nil {
 			log.Fatal(err)
 		}
-		candidateVersion, hasKey := packageJson.Engines["nodejs"]
+		candidateVersion, hasKey := packageJson.Engines["node"]
 		if hasKey {
 			requestedVersion = candidateVersion
 		}
@@ -94,7 +96,7 @@ func (contrib NodeJsRuntimeLayerContributor) Contribute(layer libcnb.Layer) (lib
 
 	// Check to see if a cached layer has already been restored and compare the version to see if we should recreate it
 	cacheCheckFilePath := path.Join(layer.Path, "buildpack_cache_check.txt")
-	if _, err := os.Stat(layer.Path); err != nil {
+	if _, err := os.Stat(cacheCheckFilePath); err == nil {
 		installedVersionBytes, err := os.ReadFile(cacheCheckFilePath)
 		if err != nil {
 			log.Fatal(err)
@@ -122,10 +124,9 @@ func (contrib NodeJsRuntimeLayerContributor) Contribute(layer libcnb.Layer) (lib
 
 	// Set the layer types based on what was set for the contributor
 	layer.LayerTypes = contrib.LayerTypes
-	layer.Metadata["build"] = layer.LayerTypes.Build
-	layer.Metadata["launch"] = layer.LayerTypes.Launch
-	layer.Metadata["cache"] = layer.LayerTypes.Cache
-	layer.Metadata["node_version"] = nodeVersion
+	layer.Metadata = map[string]interface{}{
+		"node_version": nodeVersion,
+	}
 
 	return layer, nil
 }
@@ -137,13 +138,17 @@ func downloadAndUntarNode(nodeVersion string, targetPath string) {
 	}
 
 	// Download file into memory so we can do a checksum
-	dl_url := "https://nodejs.org/download/release/v" + nodeVersion + "node-" + nodeVersion + "-linux-" + runtime.GOARCH + ".tar.gz"
+	dl_arch := runtime.GOARCH
+	if dl_arch == "amd64" {
+		dl_arch = "x64"
+	}
+	dl_url := "https://nodejs.org/download/release/v" + nodeVersion + "/node-v" + nodeVersion + "-linux-" + dl_arch + ".tar.gz"
 	response, err := http.Get(dl_url)
 	if err != nil {
 		log.Fatal(err)
 	}
 	if response.StatusCode != 200 {
-		log.Fatal("Got status code", response.StatusCode, "for", dl_url)
+		log.Fatal("Got status code ", response.StatusCode, " for ", dl_url)
 	}
 	tgzBytes, err := io.ReadAll(response.Body)
 	if err != nil {
@@ -152,7 +157,7 @@ func downloadAndUntarNode(nodeVersion string, targetPath string) {
 	// TODO: Verify checksum and signature -- download SHASUM256.txt from the same spot
 
 	// Untar into the target location
-	common.UntarBytes(tgzBytes, targetPath)
+	common.UntarBytes(tgzBytes, targetPath, 1)
 }
 
 func findRealNodeVersion(requestedVersion string) string {
@@ -175,13 +180,78 @@ func findRealNodeVersion(requestedVersion string) string {
 	semver.Sort(nodeVersions)
 
 	if requestedVersion != "latest" {
+		// Convert node shorthands to semver.Range string
+		requestedVersion = strings.ReplaceAll(requestedVersion, "*", "x")
+		// 18.1.2 - 18.3.2 is >=18.1.2 <=18.3.2
+		exp := regexp.MustCompile(`[0-9x]+(\.[^ ]+)? - [0-9x]+`)
+		rangeLocs := exp.FindAllStringIndex(requestedVersion, -1)
+		if rangeLocs != nil {
+			for _, loc := range rangeLocs {
+				requestedVersion = requestedVersion[:loc[0]] + ">=" + requestedVersion[loc[0]:]
+			}
+			requestedVersion = strings.ReplaceAll(requestedVersion, " - ", " <=")
+		}
+		// Handle ^ and ~
+		hasCarrotOrTilde, _ := regexp.MatchString("(^|~)", requestedVersion)
+		if hasCarrotOrTilde {
+			semverRange := ""
+			rangeParts := strings.Split(requestedVersion, " ")
+			for _, part := range rangeParts {
+				if part[0] == '~' {
+					// ~18.1.2 is >=18.1.2 <18.2.0
+					semverRange += ">=" + part[1:]
+					tempVersion, err := semver.ParseTolerant(part[1:])
+					if err != nil {
+						log.Fatal(err)
+					}
+					tempVersion.IncrementMinor()
+					tempVersion.Patch = 0
+					semverRange += " <" + tempVersion.FinalizeVersion() + " "
+				} else if part[0] == '^' {
+					// ^18.1.2 is >=18.1.2 <19.0.0
+					semverRange += ">=" + part[1:] + " "
+					tempVersion, err := semver.ParseTolerant(part[1:])
+					if err != nil {
+						log.Fatal(err)
+					}
+					tempVersion.IncrementMajor()
+					tempVersion.Minor = 0
+					tempVersion.Patch = 0
+					semverRange += " <" + tempVersion.FinalizeVersion() + " "
+				} else {
+					semverRange += part + " "
+				}
+			}
+			requestedVersion = semverRange
+		}
+		// 18 is 18.x.x, 18.1 is 18.1.x
+		expX := regexp.MustCompile(`[!=>< ][0-9x]+(\.[0-9x]+)? `)
+		requestedVersion = " " + requestedVersion + " "
+		for {
+			loc := expX.FindStringIndex(requestedVersion)
+			if loc == nil {
+				break
+			}
+			version := requestedVersion[loc[0]+1 : loc[1]-1]
+			if strings.Contains(version, ".") {
+				version = version + ".x"
+			} else {
+				version = version + ".x.x"
+			}
+			requestedVersion = requestedVersion[:loc[0]+1] + version + requestedVersion[loc[1]-1:]
+		}
+
+		log.Println("Matching node version", requestedVersion)
 		expectedRange := semver.MustParseRange(requestedVersion)
-		for _, nodeVersion := range nodeVersions {
+		// Sorted in ascending order, so run through in reverse order to get the latest matching
+		for i := len(nodeVersions) - 1; i >= 0; i-- {
+			nodeVersion := nodeVersions[i]
 			if expectedRange(nodeVersion) {
 				return nodeVersion.FinalizeVersion()
 			}
 		}
-		log.Fatal("Invalid node version", requestedVersion)
+
+		log.Fatal("Unable to match node version", requestedVersion)
 	}
 
 	return nodeVersions[0].FinalizeVersion()

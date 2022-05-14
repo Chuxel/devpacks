@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"gonum.org/v1/gonum/stat/combin"
 )
@@ -193,11 +194,11 @@ func DockerCli(workingDir string, captureOutput bool, args ...string) []byte {
 	return outputBytes.Bytes()
 }
 
-func UntarBytes(tarBytes []byte, targetFolder string) error {
-	return Untar(bytes.NewReader(tarBytes), targetFolder)
+func UntarBytes(tarBytes []byte, targetFolder string, strip int) error {
+	return Untar(bytes.NewReader(tarBytes), targetFolder, strip)
 }
 
-func Untar(reader io.Reader, targetFolder string) error {
+func Untar(reader io.Reader, targetFolder string, strip int) error {
 	gzReader, err := gzip.NewReader(reader)
 	if err != nil {
 		return err
@@ -214,7 +215,20 @@ func Untar(reader io.Reader, targetFolder string) error {
 			return err
 		}
 
-		targetPath := filepath.Join(targetFolder, header.Name)
+		targetRelPath := header.Name
+		// Strip out needed folders from path, files
+		if strip > 0 {
+			tarFilePathParts := strings.Split(header.Name, string(os.PathSeparator))
+			if len(tarFilePathParts) <= strip {
+				continue
+			}
+			basePath := filepath.Join(tarFilePathParts[:strip]...)
+			targetRelPath, _ = filepath.Rel(basePath, targetRelPath)
+			if targetRelPath == "." {
+				continue
+			}
+		}
+		targetPath := filepath.Join(targetFolder, targetRelPath)
 
 		headerFileInfo := header.FileInfo()
 		// If header says entry is a folder, create it

@@ -11,8 +11,8 @@
             "mode": "debug",
             "program": "${workspaceFolder}/cmd/nodejs/detect/main.go",
             "args": [
-				"${workspaceFolder}/test/out/platform",
-				"${workspaceFolder}/test/out/plan.toml"
+				"${workspaceFolder}/test/out/detect/platform",
+				"${workspaceFolder}/test/out/detect/plan.toml"
             ],
 			"env": {
 				"CNB_PLATFORM_API": "0.8",
@@ -37,7 +37,7 @@
 			"env": {
 				"CNB_PLATFORM_API": "0.8",
 				"CNB_STACK_ID": "com.chuxel.stacks.test.bionic",
-				"CNB_BUILDPACK_DIR":"${workspaceFolder}/../test/out/buildpack",
+				"CNB_BUILDPACK_DIR":"${workspaceFolder}/bin/nodejs",
 				"BP_DCNB_BUILD_MODE": "devcontainer"
 			},
 			"cwd": "${workspaceFolder}/test/test-project",
