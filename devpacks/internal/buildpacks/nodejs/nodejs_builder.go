@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 
 	"github.com/blang/semver/v4"
@@ -118,7 +119,7 @@ func (contrib NodeJsRuntimeLayerContributor) Contribute(layer libcnb.Layer) (lib
 	common.WriteFile(path.Join(layer.Path, "feature.json"), featureJsonBytes)
 
 	// Update lookup feature.json search path for finalize buildpack
-	layer.BuildEnvironment.Append(common.FINALIZE_FEATURE_JSON_SEARCH_PATH_ENV_VAR_NAME, ":", layer.Path)
+	layer.BuildEnvironment.Append(common.FINALIZE_FEATURE_JSON_SEARCH_PATH_ENV_VAR_NAME, string(filepath.ListSeparator), layer.Path)
 
 	// Set the layer types based on what was set for the contributor
 	layer.LayerTypes = contrib.LayerTypes

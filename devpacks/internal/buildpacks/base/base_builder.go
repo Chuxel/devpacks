@@ -25,7 +25,7 @@ func DefaultBuild(builder DefaultBuilder, context libcnb.BuildContext) (libcnb.B
 	log.Println("Number of plan entries:", len(context.Plan.Entries))
 	log.Println("Env:", os.Environ())
 
-	var result libcnb.BuildResult
+	result := libcnb.NewBuildResult()
 
 	overrideLayerTypes := map[string]bool{}
 	for _, entry := range context.Plan.Entries {

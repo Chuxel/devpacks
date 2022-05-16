@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 
 	"github.com/tailscale/hujson"
 )
@@ -38,13 +39,23 @@ func loadDevContainerJsonConent(applicationFolder string) ([]byte, string) {
 func (devContainer *DevContainer) Load(applicationFolder string) string {
 	content, devContainerJsonPath := loadDevContainerJsonConent(applicationFolder)
 	if devContainerJsonPath != "" {
-		err := json.Unmarshal(content, devContainer.Properties)
+		err := json.Unmarshal(content, &devContainer.Properties)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 	}
 	return devContainerJsonPath
+}
+
+func (devContainer *DevContainer) MergePropertyMap(inMap map[string]interface{}) {
+	result := mergePropertyMap(devContainer.Properties, inMap)
+	devContainer.Properties = make(map[string]interface{})
+	itr := reflect.ValueOf(result).MapRange()
+	for itr.Next() {
+		devContainer.Properties[itr.Key().String()] = itr.Value()
+	}
+
 }
 
 func LoadDevContainerJsonAsMap(applicationFolder string) (map[string]json.RawMessage, string) {
@@ -85,6 +96,42 @@ func FindDevContainerJson(applicationFolder string) string {
 		}
 	}
 	return expectedPath
+}
+
+func mergePropertyMap(existingVal interface{}, inVal interface{}) interface{} {
+	typ := reflect.TypeOf(inVal).Kind()
+
+	if typ == reflect.Slice || typ == reflect.Array {
+		outVal := make([]interface{}, 0)
+		if existingVal != nil {
+			rExVal := reflect.ValueOf(existingVal)
+			for i := 0; i < rExVal.Len(); i++ {
+				outVal = append(outVal, rExVal.Index(i).Interface())
+			}
+		}
+		rInVal := reflect.ValueOf(inVal)
+		for i := 0; i < rInVal.Len(); i++ {
+			outVal = append(outVal, rInVal.Index(i).Interface())
+		}
+		return outVal
+
+	} else if typ == reflect.Map {
+		if existingVal == nil {
+			return inVal
+		}
+
+		outVal := make(map[string]interface{})
+		rExVal := reflect.ValueOf(existingVal)
+		rInVal := reflect.ValueOf(inVal)
+		itr := rInVal.MapRange()
+		for itr.Next() {
+			outVal[itr.Key().String()] = mergePropertyMap(rExVal.MapIndex(itr.Key()).Interface(), itr.Value().Interface())
+		}
+		return outVal
+
+	} else {
+		return inVal
+	}
 }
 
 /*
