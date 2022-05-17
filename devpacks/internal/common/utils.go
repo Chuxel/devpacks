@@ -59,6 +59,42 @@ func SetFieldValue(field reflect.Value, value interface{}) {
 	}
 }
 
+func MergeProperties(existingVal interface{}, inVal interface{}) interface{} {
+	typ := reflect.TypeOf(inVal).Kind()
+
+	if typ == reflect.Slice || typ == reflect.Array {
+		outVal := make([]interface{}, 0)
+		if existingVal != nil {
+			rExVal := reflect.ValueOf(existingVal)
+			for i := 0; i < rExVal.Len(); i++ {
+				outVal = append(outVal, rExVal.Index(i).Interface())
+			}
+		}
+		rInVal := reflect.ValueOf(inVal)
+		for i := 0; i < rInVal.Len(); i++ {
+			outVal = append(outVal, rInVal.Index(i).Interface())
+		}
+		return outVal
+
+	} else if typ == reflect.Map {
+		if existingVal == nil {
+			return inVal
+		}
+
+		outVal := make(map[string]interface{})
+		rExVal := reflect.ValueOf(existingVal)
+		rInVal := reflect.ValueOf(inVal)
+		itr := rInVal.MapRange()
+		for itr.Next() {
+			outVal[itr.Key().String()] = MergeProperties(rExVal.MapIndex(itr.Key()).Interface(), itr.Value().Interface())
+		}
+		return outVal
+
+	} else {
+		return inVal
+	}
+}
+
 func CpR(sourcePath string, targetFolderPath string) {
 	sourceFileInfo, err := os.Stat(sourcePath)
 	if err != nil {

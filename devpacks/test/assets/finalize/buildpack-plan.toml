@@ -1,0 +1,18 @@
+[[entries]]
+  name = "nodejs"
+  [entries.metadata]
+    build = false
+    cache = true
+    launch = false
+
+[[entries]]
+  name = "nodejs"
+  [entries.metadata]
+    build = true
+    cache = false
+
+[[entries]]
+  name = "some-unmet-dependency"
+
+[[entries]]
+  name = "devpack-finalize"

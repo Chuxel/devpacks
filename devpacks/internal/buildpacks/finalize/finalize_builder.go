@@ -38,8 +38,9 @@ func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildR
 	mergedDevContainerJson := common.DevContainer{Properties: make(map[string]interface{})}
 	featureJsonSearchPath := os.Getenv(common.FINALIZE_JSON_SEARCH_PATH_ENV_VAR_NAME)
 	featureJsonLocs := filepath.SplitList(featureJsonSearchPath)
+	// For each path in search list
 	for _, loc := range featureJsonLocs {
-		// Load jsonc files from path
+		// Load jsonc file
 		featureConfigBytes, err := os.ReadFile(filepath.Join(loc, "feature.json"))
 		if err != nil {
 			log.Fatal(err)
