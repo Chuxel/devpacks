@@ -29,7 +29,9 @@ func (detector FinalizeDetector) Detect(context libcnb.DetectContext) (libcnb.De
 			},
 		}
 		result.Pass = true
+		log.Println("Detection passed.")
 	} else {
+		log.Println("Skipping since not in devcontainer mode.")
 		result.Pass = false
 	}
 	return result, nil

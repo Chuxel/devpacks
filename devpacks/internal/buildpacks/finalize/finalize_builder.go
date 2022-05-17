@@ -17,12 +17,6 @@ type FinalizeBuilder struct {
 	// Build(context libcnb.BuildContext) (libcnb.BuildResult, error)
 }
 
-type FinalizeLayerContributor struct {
-	// Implements libcnb.LayerContributor
-	// Contribute(context libcnb.ContributeContext) (libcnb.Layer, error)
-	// Name() string
-}
-
 func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	buildMode := common.ContainerImageBuildMode()
 	log.Println("Devpack path:", context.Buildpack.Path)
@@ -40,8 +34,10 @@ func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildR
 	featureJsonLocs := filepath.SplitList(featureJsonSearchPath)
 	// For each path in search list
 	for _, loc := range featureJsonLocs {
+		filename := filepath.Join(loc, "feature.json")
+		log.Println("Processing ", filename)
 		// Load jsonc file
-		featureConfigBytes, err := os.ReadFile(filepath.Join(loc, "feature.json"))
+		featureConfigBytes, err := os.ReadFile(filename)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -61,6 +57,7 @@ func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildR
 	}
 
 	// Add the result to the label
+	log.Println("Applying merged json content to label ", common.DEVCONTAINER_JSON_LABEL_NAME)
 	devContainerJsonBytes, err := json.Marshal(mergedDevContainerJson.Properties)
 	if err != nil {
 		log.Fatal(err)
@@ -73,6 +70,7 @@ func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildR
 	}
 
 	// Set the default process to bash
+	log.Println("Overriding default launch process...")
 	result.Processes = append(result.Processes, libcnb.Process{
 		Type:    "devcontainer",
 		Command: "/cnb/lifecycle/launcher",
@@ -81,6 +79,7 @@ func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildR
 	})
 
 	// Clear out workspace folder since we'll bind mount these contents
+	log.Println("Removing workspace contents from image...")
 	files, err := os.ReadDir(context.Application.Path)
 	if err != nil {
 		log.Fatal("Failed to get directory contents in", context.Application.Path, "-", err)
@@ -102,14 +101,4 @@ func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildR
 
 	return result, nil
 
-}
-
-// Implementation of libcnb.LayerContributor.Name
-func (contrib FinalizeLayerContributor) Name() string {
-	return FINALIZE_BUILDPACK_NAME
-}
-
-// Implementation of libcnb.LayerContributor.Contribute
-func (contrib FinalizeLayerContributor) Contribute(layer libcnb.Layer) (libcnb.Layer, error) {
-	return layer, nil
 }

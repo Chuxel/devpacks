@@ -94,6 +94,7 @@ func (contrib NodeJsRuntimeLayerContributor) Contribute(layer libcnb.Layer) (lib
 	nodeVersion := findRealNodeVersion(requestedVersion)
 
 	// Check to see if a cached layer has already been restored and compare the version to see if we should recreate it
+	installNode := true
 	cacheCheckFilePath := path.Join(layer.Path, "buildpack_cache_check.txt")
 	if _, err := os.Stat(cacheCheckFilePath); err == nil {
 		installedVersionBytes, err := os.ReadFile(cacheCheckFilePath)
@@ -105,19 +106,23 @@ func (contrib NodeJsRuntimeLayerContributor) Contribute(layer libcnb.Layer) (lib
 			if err := os.RemoveAll(layer.Path); err != nil {
 				log.Fatal(err)
 			}
+			installNode = true
 			downloadAndUntarNode(nodeVersion, layer.Path)
+			common.WriteFile(cacheCheckFilePath, []byte(nodeVersion))
+		} else {
+			installNode = false
 		}
-	} else {
-		downloadAndUntarNode(nodeVersion, layer.Path)
 	}
-	common.WriteFile(cacheCheckFilePath, []byte(nodeVersion))
+	if installNode {
+		downloadAndUntarNode(nodeVersion, layer.Path)
+		// Add cache check file
+		common.WriteFile(cacheCheckFilePath, []byte(nodeVersion))
+		// Add NODE_VERSION env var
+		layer.SharedEnvironment.Default("NODE_VERSION", nodeVersion)
+	}
 
-	// Augment and write feature.json file to path
-	// **This buildpack doesn't need to modify, so just write**
-	// featureConfig := common.FeatureConfig{}
-	// featureConfig.LoadBytes(featureJsonBytes)
+	// Write feature.json
 	common.WriteFile(path.Join(layer.Path, "feature.json"), featureJsonBytes)
-
 	// Update lookup feature.json search path for finalize buildpack
 	layer.BuildEnvironment.Append(common.FINALIZE_JSON_SEARCH_PATH_ENV_VAR_NAME, string(filepath.ListSeparator), layer.Path)
 

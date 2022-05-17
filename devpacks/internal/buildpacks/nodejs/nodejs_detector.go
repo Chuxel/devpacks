@@ -1,6 +1,7 @@
 package nodejs
 
 import (
+	"log"
 	"os"
 	"path"
 
@@ -36,8 +37,10 @@ func (detector NodeJsRuntimeDetector) DoDetect(context libcnb.DetectContext) (bo
 
 	// Look for package json in the root
 	if _, err := os.Stat(path.Join(context.Application.Path, "package.json")); err != nil {
+		log.Println("No package.json found in ", context.Application.Path)
 		return false, metadata, nil
 	}
 
+	log.Println("Detection passed.")
 	return true, metadata, nil
 }
