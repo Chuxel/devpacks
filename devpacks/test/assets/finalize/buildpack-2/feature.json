@@ -1,5 +1,19 @@
 {
-    "extensions": [
-        "ms-python.python"
-    ]
+    "capAdd": [
+        "SYS_PTRACE"
+    ],
+    "securityOpt": [
+        "seccomp=unconfined"
+    ],
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "go.toolsManagement.checkForUpdates": "local",
+                "go.useLanguageServer": true
+            },
+            "extensions": [
+                "golang.Go"
+            ]        
+        }
+    }
 }

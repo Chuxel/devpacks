@@ -58,13 +58,10 @@ func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildR
 
 		// Merge content
 		mergedDevContainerJson.MergePropertyMap(inMap)
-		//TEMP
-		result, _ := json.Marshal(mergedDevContainerJson.Properties)
-		log.Println(string(result))
 	}
 
 	// Add the result to the label
-	devContainerJsonBytes, err := json.Marshal(mergedDevContainerJson)
+	devContainerJsonBytes, err := json.Marshal(mergedDevContainerJson.Properties)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -75,7 +72,24 @@ func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildR
 		},
 	}
 
-	//result.Layers = append(result.Layers, FinalizeLayerContributor{})
+	// Set the default process to bash
+	result.Processes = append(result.Processes, libcnb.Process{
+		Type:    "devcontainer",
+		Command: "/cnb/lifecycle/launcher",
+		Default: true,
+		Direct:  true,
+	})
+
+	// Clear out workspace folder since we'll bind mount these contents
+	files, err := os.ReadDir(context.Application.Path)
+	if err != nil {
+		log.Fatal("Failed to get directory contents in", context.Application.Path, "-", err)
+	}
+	for _, file := range files {
+		if err := os.RemoveAll(filepath.Join(context.Application.Path, file.Name())); err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	// Handle unmets
 	for _, entry := range context.Plan.Entries {

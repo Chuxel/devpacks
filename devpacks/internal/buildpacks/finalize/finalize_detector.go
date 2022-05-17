@@ -1,6 +1,7 @@
 package finalize
 
 import (
+	"log"
 	"os"
 
 	"github.com/buildpacks/libcnb"
@@ -13,8 +14,14 @@ type FinalizeDetector struct {
 }
 
 func (detector FinalizeDetector) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) {
+	buildMode := common.ContainerImageBuildMode()
+	log.Println("Devpack path:", context.Buildpack.Path)
+	log.Println("Application path:", context.Application.Path)
+	log.Println("Build mode:", buildMode)
+	log.Println("Env:", os.Environ())
+
 	var result libcnb.DetectResult
-	if common.ContainerImageBuildMode() == "devcontainer" && os.Getenv(common.FINALIZE_JSON_SEARCH_PATH_ENV_VAR_NAME) != "" {
+	if buildMode == "devcontainer" {
 		result.Plans = []libcnb.BuildPlan{
 			{
 				Provides: []libcnb.BuildPlanProvide{{Name: FINALIZE_BUILDPACK_NAME}},
