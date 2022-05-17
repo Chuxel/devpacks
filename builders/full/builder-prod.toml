@@ -1,22 +1,14 @@
 # https://buildpacks.io/docs/reference/config/builder-config/
 [[buildpacks]]
-  id = "${publisher}/${featureset}"
-  uri = "docker://ghcr.io/${publisher}/${buildpack_set}/devpack:${version}"
-
-[[buildpacks]]
-  id = "${publisher}/${buildpack_set}/prodpacks/npm"
-  uri = "${toml_dir}/../../prodpacks/npm"
+  id = "${publisher}/${repository}/buildpack-nodejs"
+  uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-nodejs"
 
 [[order]]
 
     [[order.group]]
-    id = "${publisher}/${buildpack_set}"
-    optional = true
-
-    [[order.group]]
-    id = "${publisher}/${buildpack_set}/prodpacks/npm"
+    id = "${publisher}/${repository}/buildpack-nodejs"
 
 [stack]
 id = "io.buildpacks.stacks.bionic"
-run-image = "ghcr.io/${publisher}/${buildpack_set}/stack-run-image"
-build-image = "ghcr.io/${publisher}/${buildpack_set}/stack-build-image"
+run-image = "ghcr.io/${publisher}/${repository}/stack-run-image"
+build-image = "ghcr.io/${publisher}/${repository}/stack-build-image"

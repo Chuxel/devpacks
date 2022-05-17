@@ -2,5 +2,5 @@
 
 [stack]
   id = "io.buildpacks.stacks.bionic"
-  run-image = "ghcr.io/${publisher}/${buildpack_set}/stack-run-image"
-  build-image = "ghcr.io/${publisher}/${buildpack_set}/stack-build-image"
+  run-image = "ghcr.io/${publisher}/${repository}/stack-run-image"
+  build-image = "ghcr.io/${publisher}/${repository}/stack-build-image"

@@ -1,22 +1,21 @@
 # https://buildpacks.io/docs/reference/config/builder-config/
 [[buildpacks]]
-  id = "${publisher}/${buildpack_set}"
-  uri = "docker://ghcr.io/${publisher}/${buildpack_set}/devpack:${version}"
+  id = "${publisher}/${repository}/buildpack-nodejs"
+  uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-nodejs"
 
 [[buildpacks]]
-  id = "${publisher}/${buildpack_set}/mode/devcontainer"
-  uri = "${toml_dir}/../../modepacks/devcontainer"
+  id = "${publisher}/${repository}/buildpack-finalize"
+  uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-finalize"
 
 [[order]]
 
     [[order.group]]
-    id = "${publisher}/${buildpack_set}/mode/devcontainer"
+    id = "${publisher}/${repository}/buildpack-nodejs"
 
     [[order.group]]
-    id = "${publisher}/${buildpack_set}"
-    optional = true
+    id = "${publisher}/${repository}/buildpack-finalize"
 
 [stack]
 id = "io.buildpacks.stacks.bionic"
-run-image = "ghcr.io/${publisher}/${buildpack_set}/stack-devcontainer-run-image"
-build-image = "ghcr.io/${publisher}/${buildpack_set}/stack-devcontainer-build-image"
+run-image = "ghcr.io/${publisher}/${repository}/stack-devcontainer-run-image"
+build-image = "ghcr.io/${publisher}/${repository}/stack-devcontainer-build-image"
