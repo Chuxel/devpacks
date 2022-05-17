@@ -53,7 +53,7 @@ func (devContainer *DevContainer) MergePropertyMap(inMap map[string]interface{})
 	devContainer.Properties = make(map[string]interface{})
 	itr := reflect.ValueOf(result).MapRange()
 	for itr.Next() {
-		devContainer.Properties[itr.Key().String()] = itr.Value()
+		devContainer.Properties[itr.Key().String()] = itr.Value().Interface()
 	}
 }
 

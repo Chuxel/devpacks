@@ -58,6 +58,9 @@ func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildR
 
 		// Merge content
 		mergedDevContainerJson.MergePropertyMap(inMap)
+		//TEMP
+		result, _ := json.Marshal(mergedDevContainerJson.Properties)
+		log.Println(string(result))
 	}
 
 	// Add the result to the label

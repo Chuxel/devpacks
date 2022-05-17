@@ -77,7 +77,7 @@
 			"env": {
 				"CNB_PLATFORM_API": "0.8",
 				"CNB_STACK_ID": "com.chuxel.stacks.test.bionic",
-				"CNB_BUILDPACK_DIR":"${workspaceFolder}/assets/finalize",
+				"CNB_BUILDPACK_DIR":"${workspaceFolder}/test/assets/finalize",
 				"BP_DCNB_BUILD_MODE": "devcontainer",
 				"FINALIZE_JSON_SEARCH_PATH": "${workspaceFolder}/test/assets/finalize/buildpack-1:${workspaceFolder}/test/assets/finalize/buildpack-2"
 			},
