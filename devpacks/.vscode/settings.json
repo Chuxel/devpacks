@@ -1,13 +1,18 @@
 {
     "cSpell.words": [
         "blang",
+        "BUILDPACK",
+        "buildpacks",
+        "devpack",
         "devpacks",
         "godotenv",
         "gonum",
         "hujson",
         "joho",
         "libcnb",
+        "npminstall",
         "packcli",
+        "reqs",
         "Untar"
     ]
 }
