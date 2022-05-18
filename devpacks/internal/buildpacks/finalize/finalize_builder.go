@@ -92,7 +92,7 @@ func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildR
 
 	// Handle unmets
 	for _, entry := range context.Plan.Entries {
-		if entry.Name != FINALIZE_BUILDPACK_NAME {
+		if entry.Name != BUILDPACK_NAME {
 			result.Unmet = append(result.Unmet, libcnb.UnmetPlanEntry{Name: entry.Name})
 		}
 	}

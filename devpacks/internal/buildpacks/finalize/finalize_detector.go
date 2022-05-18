@@ -24,8 +24,8 @@ func (detector FinalizeDetector) Detect(context libcnb.DetectContext) (libcnb.De
 	if buildMode == "devcontainer" {
 		result.Plans = []libcnb.BuildPlan{
 			{
-				Provides: []libcnb.BuildPlanProvide{{Name: FINALIZE_BUILDPACK_NAME}},
-				Requires: []libcnb.BuildPlanRequire{{Name: FINALIZE_BUILDPACK_NAME}},
+				Provides: []libcnb.BuildPlanProvide{{Name: BUILDPACK_NAME}},
+				Requires: []libcnb.BuildPlanRequire{{Name: BUILDPACK_NAME}},
 			},
 		}
 		result.Pass = true

@@ -3,6 +3,7 @@ package nodejs
 import (
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -49,7 +50,7 @@ func (builder NodeJsRuntimeBuilder) Build(context libcnb.BuildContext) (libcnb.B
 
 // Implementation of base.BaseBuilder.Name
 func (builder NodeJsRuntimeBuilder) Name() string {
-	return NODEJS_RUNTIME_BUILDPACK_NAME
+	return BUILDPACK_NAME
 }
 
 // Implementation of base.BaseBuilder.NewLayerContributor
@@ -59,7 +60,7 @@ func (builder NodeJsRuntimeBuilder) NewLayerContributor(buildMode string, layerT
 
 // Implementation of libcnb.LayerContributor.Name
 func (contrib NodeJsRuntimeLayerContributor) Name() string {
-	return NODEJS_RUNTIME_BUILDPACK_NAME
+	return BUILDPACK_NAME
 }
 
 // Implementation of libcnb.LayerContributor.Contribute
@@ -68,69 +69,65 @@ func (contrib NodeJsRuntimeLayerContributor) Contribute(layer libcnb.Layer) (lib
 	// Version of Node.js to download
 	requestedVersion := "^18.1.0"
 
-	//TODO: Set nodejs version based on BP_ env var if set
+	// Can be specified in project.toml or pack command line
+	if os.Getenv("BP_NODE_VERSION") != "" {
+		requestedVersion = os.Getenv("BP_NODE_VERSION")
+	} else {
+		// Otherwise look for package json and see if engine version is set
+		packageJsonPath := path.Join(contrib.Context.Application.Path, "package.json")
+		// Get engine value for nodejs if it exists in package.json
+		if _, err := os.Stat(packageJsonPath); err == nil {
+			type PackageJson struct {
+				Engines map[string]string
+			}
+			var packageJson PackageJson
+			content, err := os.ReadFile(packageJsonPath)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if err := json.Unmarshal(content, &packageJson); err != nil {
+				log.Fatal(err)
+			}
+			candidateVersion, hasKey := packageJson.Engines["node"]
+			if hasKey {
+				requestedVersion = candidateVersion
+			}
+		}
 
-	packageJsonPath := path.Join(contrib.Context.Application.Path, "package.json")
-	// Get engine value for nodejs if it exists in package.json
-	if _, err := os.Stat(packageJsonPath); err == nil {
-		type PackageJson struct {
-			Engines map[string]string
-		}
-		var packageJson PackageJson
-		content, err := os.ReadFile(packageJsonPath)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := json.Unmarshal(content, &packageJson); err != nil {
-			log.Fatal(err)
-		}
-		candidateVersion, hasKey := packageJson.Engines["node"]
-		if hasKey {
-			requestedVersion = candidateVersion
-		}
+		// TODO: Check .nvmrc and .node-version if present
 	}
 
 	// Determine real node version to acquire (since requested could be a semver range)
 	nodeVersion := findRealNodeVersion(requestedVersion)
 
-	// Check to see if a cached layer has already been restored and compare the version to see if we should recreate it
 	installNode := true
-	cacheCheckFilePath := path.Join(layer.Path, "buildpack_cache_check.txt")
-	if _, err := os.Stat(cacheCheckFilePath); err == nil {
-		installedVersionBytes, err := os.ReadFile(cacheCheckFilePath)
-		if err != nil {
-			log.Fatal(err)
-		}
-		// If versions do not match, we should ignore the cache
-		if string(installedVersionBytes) != nodeVersion {
+	// Check to see if a cached layer has already been restored and compare the version to see if we should recreate it
+	if layer.Metadata["node_version"] != nil {
+		if nodeVersion != fmt.Sprint(layer.Metadata["node_version"]) {
 			if err := os.RemoveAll(layer.Path); err != nil {
-				log.Fatal(err)
+				log.Fatal("Unable to remove ", layer.Path, ". ", err)
 			}
 			installNode = true
-			downloadAndUntarNode(nodeVersion, layer.Path)
-			common.WriteFile(cacheCheckFilePath, []byte(nodeVersion))
 		} else {
+			log.Println("Reusing cached layer.")
 			installNode = false
 		}
 	}
+
 	if installNode {
 		downloadAndUntarNode(nodeVersion, layer.Path)
-		// Add cache check file
-		common.WriteFile(cacheCheckFilePath, []byte(nodeVersion))
 		// Add NODE_VERSION env var
 		layer.SharedEnvironment.Default("NODE_VERSION", nodeVersion)
+		// Update lookup feature.json search path for finalize buildpack
+		layer.BuildEnvironment.Append(common.FINALIZE_JSON_SEARCH_PATH_ENV_VAR_NAME, string(filepath.ListSeparator), layer.Path)
+		// Set the layer types based on what was set for the contributor
+		layer.LayerTypes = contrib.LayerTypes
+		layer.Metadata = map[string]interface{}{
+			"node_version": nodeVersion,
+		}
 	}
-
-	// Write feature.json
+	// Write feature.json in all cases since its quick and we can avoid doing a checksum when caching
 	common.WriteFile(path.Join(layer.Path, "feature.json"), featureJsonBytes)
-	// Update lookup feature.json search path for finalize buildpack
-	layer.BuildEnvironment.Append(common.FINALIZE_JSON_SEARCH_PATH_ENV_VAR_NAME, string(filepath.ListSeparator), layer.Path)
-
-	// Set the layer types based on what was set for the contributor
-	layer.LayerTypes = contrib.LayerTypes
-	layer.Metadata = map[string]interface{}{
-		"node_version": nodeVersion,
-	}
 
 	return layer, nil
 }

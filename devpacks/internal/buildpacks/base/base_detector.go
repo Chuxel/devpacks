@@ -12,7 +12,7 @@ type DefaultDetector interface {
 
 	Name() string
 	AlwaysPass() bool
-	DoDetect(context libcnb.DetectContext) (bool, map[string]interface{}, error)
+	DoDetect(context libcnb.DetectContext) (bool, []libcnb.BuildPlanRequire, map[string]interface{}, error)
 }
 
 // Implementation of libcnb.Detector.Detect
@@ -22,18 +22,20 @@ func DefaultDetect(detector DefaultDetector, context libcnb.DetectContext) (libc
 	log.Println("Env:", os.Environ())
 
 	var result libcnb.DetectResult
-	detected, metadata, err := detector.DoDetect(context)
+	detected, reqs, metadata, err := detector.DoDetect(context)
 	if err != nil {
 		return result, err
 	}
+	if reqs == nil {
+		reqs = []libcnb.BuildPlanRequire{}
+	}
+
 	result.Plans = []libcnb.BuildPlan{}
 	if detected {
-		result.Plans = append(result.Plans,
-			libcnb.BuildPlan{
-				Provides: []libcnb.BuildPlanProvide{{Name: detector.Name()}},
-				Requires: []libcnb.BuildPlanRequire{{Name: detector.Name(), Metadata: metadata}},
-			},
-		)
+		result.Plans = append(result.Plans, libcnb.BuildPlan{
+			Provides: []libcnb.BuildPlanProvide{{Name: detector.Name()}},
+			Requires: append(reqs, libcnb.BuildPlanRequire{Name: detector.Name(), Metadata: metadata}),
+		})
 	} else if detector.AlwaysPass() {
 		// Add a plan that either provides nothing (so we don't get an error about
 		// no require for something provided) and one that provides itself.
@@ -44,11 +46,10 @@ func DefaultDetect(detector DefaultDetector, context libcnb.DetectContext) (libc
 			},
 			libcnb.BuildPlan{
 				Provides: []libcnb.BuildPlanProvide{{Name: detector.Name()}},
-				Requires: []libcnb.BuildPlanRequire{},
+				Requires: reqs,
 			},
 		)
 	}
-
 	result.Pass = detector.AlwaysPass() || detected
 
 	return result, nil
