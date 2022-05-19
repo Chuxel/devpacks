@@ -3,7 +3,7 @@ api = "0.7"
 
 # Buildpack ID and metadata
 [buildpack]
-  id = "chuxel/devpacks/nodejs"
+  id = "chuxel/devpacks/buildpack-nodejs"
   version = "v0.0.1"
 
 # Stacks that the buildpack will work with
