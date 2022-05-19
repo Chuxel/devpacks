@@ -18,6 +18,6 @@ cd "${SCRIPT_DIR}/test-project"
 pack build test_image \
     -v \
     --pull-policy if-not-present \
-    --builder ghcr.io/chuxel/devpacks/builder-devcontainer-full \
+    --builder ghcr.io/chuxel/devpacks/builder-${2:-devcontainer}-full \
     ${clear_cache_flag} \
     --trust-builder

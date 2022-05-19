@@ -83,6 +83,46 @@
 			},
 			"cwd": "${workspaceFolder}/test/test-project",
 			"preLaunchTask": "test-out-clean"
+		},
+		{
+            "name": "Debug npminstall detect",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/npminstall/detect/main.go",
+            "args": [
+				"${workspaceFolder}/test/out/detect/platform",
+				"${workspaceFolder}/test/out/detect/plan.toml"
+            ],
+			"env": {
+				"CNB_PLATFORM_API": "0.8",
+				"CNB_STACK_ID": "com.chuxel.stacks.test.bionic",
+				"CNB_BUILDPACK_DIR":"${workspaceFolder}/test/assets/npminstall",
+				"BP_DCNB_BUILD_MODE": "production"
+			},
+			"cwd": "${workspaceFolder}/test/test-project",
+			"preLaunchTask": "test-out-clean"
+        },
+        {
+            "name": "Debug npminstall build",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/npminstall/build/main.go",
+			"args": [
+				"${workspaceFolder}/test/out/build/layers",
+				"${workspaceFolder}/test/out/build/platform",
+				"${workspaceFolder}/test/assets/npminstall/buildpack-plan.toml"
+			],
+			"env": {
+				"CNB_PLATFORM_API": "0.8",
+				"CNB_STACK_ID": "com.chuxel.stacks.test.bionic",
+				"CNB_BUILDPACK_DIR":"${workspaceFolder}/test/assets/npminstall",
+				"BP_DCNB_BUILD_MODE": "production"
+			},
+			"cwd": "${workspaceFolder}/test/test-project",
+			"preLaunchTask": "test-out-clean"
 		}
+
     ]
 }
