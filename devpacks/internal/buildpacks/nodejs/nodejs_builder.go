@@ -73,28 +73,16 @@ func (contrib NodeJsRuntimeLayerContributor) Contribute(layer libcnb.Layer) (lib
 	if os.Getenv("BP_NODE_VERSION") != "" {
 		requestedVersion = os.Getenv("BP_NODE_VERSION")
 	} else {
-		// Otherwise look for package json and see if engine version is set
-		packageJsonPath := path.Join(contrib.Context.Application.Path, "package.json")
-		// Get engine value for nodejs if it exists in package.json
-		if _, err := os.Stat(packageJsonPath); err == nil {
-			type PackageJson struct {
-				Engines map[string]string
-			}
-			var packageJson PackageJson
-			content, err := os.ReadFile(packageJsonPath)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if err := json.Unmarshal(content, &packageJson); err != nil {
-				log.Fatal(err)
-			}
-			candidateVersion, hasKey := packageJson.Engines["node"]
-			if hasKey {
-				requestedVersion = candidateVersion
-			}
+		// Otherwise look for version in a few common files
+		var candidateVersion string
+		var found bool
+		if candidateVersion, found = contrib.packageJsonVersion(); found {
+			requestedVersion = candidateVersion
+		} else if candidateVersion, found = contrib.versionInFile(".nvmrc"); found {
+			requestedVersion = candidateVersion
+		} else if candidateVersion, found = contrib.versionInFile(".node-version"); found {
+			requestedVersion = candidateVersion
 		}
-
-		// TODO: Check .nvmrc and .node-version if present
 	}
 
 	// Determine real node version to acquire (since requested could be a semver range)
@@ -193,5 +181,45 @@ func findRealNodeVersion(requestedVersion string) string {
 		log.Fatal("Unable to match node version", requestedVersion)
 	}
 
-	return nodeVersions[0].FinalizeVersion()
+	return nodeVersions[nodeVersions.Len()-1].FinalizeVersion()
+}
+
+func (contrib NodeJsRuntimeLayerContributor) packageJsonVersion() (string, bool) {
+	packageJsonPath := path.Join(contrib.Context.Application.Path, "package.json")
+	// Get engine value for nodejs if it exists in package.json
+	if _, err := os.Stat(packageJsonPath); err == nil {
+		type PackageJson struct {
+			Engines map[string]string
+		}
+		var packageJson PackageJson
+
+		content, err := os.ReadFile(packageJsonPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := json.Unmarshal(content, &packageJson); err != nil {
+			log.Fatal(err)
+		}
+		version, hasKey := packageJson.Engines["node"]
+		return version, hasKey
+	}
+
+	return "", false
+}
+
+func (contrib NodeJsRuntimeLayerContributor) versionInFile(name string) (string, bool) {
+	versionFilePath := path.Join(contrib.Context.Application.Path, name)
+	// Get engine value for nodejs if it exists in package.json
+	if _, err := os.Stat(versionFilePath); err == nil {
+		content, err := os.ReadFile(versionFilePath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if content[0] == 'v' {
+			return fmt.Sprint(content[1:]), true
+		}
+		return fmt.Sprint(content), true
+	}
+
+	return "", false
 }

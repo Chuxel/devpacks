@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"os"
@@ -236,11 +237,16 @@ func DockerCli(workingDir string, captureOutput bool, args ...string) []byte {
 	return outputBytes.Bytes()
 }
 
-func UntarBytes(tarBytes []byte, targetFolder string, strip int) error {
-	return Untar(bytes.NewReader(tarBytes), targetFolder, strip)
+func UntarBytes(tarBytes []byte, destination string, strip int) error {
+	return Untar(bytes.NewReader(tarBytes), destination, strip)
 }
 
-func Untar(reader io.Reader, targetFolder string, strip int) error {
+func Untar(reader io.Reader, destination string, strip int) error {
+	var err error
+	if destination, err = filepath.Abs(destination); err != nil {
+		log.Fatal("Failed to convert path to absolute path. ", err)
+	}
+
 	gzReader, err := gzip.NewReader(reader)
 	if err != nil {
 		return err
@@ -257,8 +263,9 @@ func Untar(reader io.Reader, targetFolder string, strip int) error {
 			return err
 		}
 
+		// Strip out specified number of folders from target path
 		targetRelPath := header.Name
-		// Strip out needed folders from path, files
+		linkRelPath := ""
 		if strip > 0 {
 			tarFilePathParts := strings.Split(header.Name, string(os.PathSeparator))
 			if len(tarFilePathParts) <= strip {
@@ -266,23 +273,47 @@ func Untar(reader io.Reader, targetFolder string, strip int) error {
 			}
 			basePath := filepath.Join(tarFilePathParts[:strip]...)
 			targetRelPath, _ = filepath.Rel(basePath, targetRelPath)
-			if targetRelPath == "." {
+			if header.Typeflag == tar.TypeLink || header.Typeflag == tar.TypeSymlink {
+				linkRelPath = filepath.Join(filepath.Dir(targetRelPath), header.Linkname)
+			}
+
+		}
+
+		// Convert to absolute paths
+		var targetPath, linkPath string
+		if targetPath, err = filepath.Abs(filepath.Join(destination, targetRelPath)); err != nil {
+			log.Fatal("Failed to convert path to absolute path. ", err)
+		}
+		if !strings.HasPrefix(targetPath, destination) {
+			continue
+		}
+		if header.Typeflag == tar.TypeLink || header.Typeflag == tar.TypeSymlink {
+			if linkPath, err = filepath.Abs(filepath.Join(destination, linkRelPath)); err != nil {
+				log.Fatal("Failed to convert path to absolute path. ", err)
+			}
+			if !strings.HasPrefix(linkPath, destination) {
 				continue
 			}
 		}
-		targetPath := filepath.Join(targetFolder, targetRelPath)
 
-		headerFileInfo := header.FileInfo()
-		// If header says entry is a folder, create it
-		if headerFileInfo.IsDir() {
+		// Process contents
+		switch header.Typeflag {
+		case tar.TypeDir:
 			if _, err := os.Stat(targetPath); err != nil {
-				if err := os.MkdirAll(targetPath, headerFileInfo.Mode()); err != nil {
+				if err := os.MkdirAll(targetPath, fs.FileMode(header.Mode)); err != nil {
 					return err
 				}
 			}
-		} else {
-			// Otherwise create a file
-			file, err := os.OpenFile(targetPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, headerFileInfo.Mode())
+		case tar.TypeSymlink:
+			if err := os.Symlink(linkPath, targetPath); err != nil {
+				return err
+			}
+		case tar.TypeLink:
+			if err := os.Link(linkPath, targetPath); err != nil {
+				return err
+			}
+		case tar.TypeReg:
+			file, err := os.OpenFile(targetPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, fs.FileMode(header.Mode))
 			if err != nil {
 				return err
 			}
