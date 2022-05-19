@@ -20,7 +20,7 @@
 	"features": {
 		"docker-in-docker": "latest",
 		"desktop-lite": "latest",
-		"golang": "1.17.6",
+		"golang": "1.17",
 		"node": "16",
 		"chuxel/devcontainer-features/packcli": "latest",
 		"chuxel/devcontainer-features/vscode": {
@@ -28,5 +28,5 @@
 		},
 		"chuxel/devcontainer-features/googlechrome": "latest"
 	},
-	//"postCreateCommand": ". /usr/local/share/nvm/nvm.sh && npm install -g @vscode/dev-container-cli"
+	"postCreateCommand": ". /usr/local/share/nvm/nvm.sh && npm install -g @devcontainers/cli"
 }
