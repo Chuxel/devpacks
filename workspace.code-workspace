@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"name": "devpacks (go module)",
+			"path": "devpacks"
+		},
+		{
+			"path": "builders"
+		},
+		{
+			"path": "images"
+		},
+		{
+			"name": "repo root",
+			"path": "."
+		}
+	],
+	"settings": {}
+}

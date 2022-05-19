@@ -10,9 +10,9 @@ fi
 # Create buildpacks and builders
 cd "${SCRIPT_DIR}/../devpacks"
 make
-cd "${SCRIPT_DIR}/../builders"
+cd "${SCRIPT_DIR}"
 ./create-builders.sh full
-cd "${SCRIPT_DIR}/test-project"
+cd "${SCRIPT_DIR}/test/test-project"
 
 # Run test
 pack build test_image \
