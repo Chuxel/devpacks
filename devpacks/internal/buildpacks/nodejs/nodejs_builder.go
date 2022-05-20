@@ -109,10 +109,11 @@ func (contrib NodeJsRuntimeLayerContributor) Contribute(layer libcnb.Layer) (lib
 		// Update lookup feature.json search path for finalize buildpack
 		layer.BuildEnvironment.Append(common.FINALIZE_JSON_SEARCH_PATH_ENV_VAR_NAME, string(filepath.ListSeparator), layer.Path)
 		// Set the layer types based on what was set for the contributor
-		layer.LayerTypes = contrib.LayerTypes
-		layer.Metadata = map[string]interface{}{
-			"node_version": nodeVersion,
-		}
+	}
+
+	layer.LayerTypes = contrib.LayerTypes
+	layer.Metadata = map[string]interface{}{
+		"node_version": nodeVersion,
 	}
 	// Write feature.json in all cases since its quick and we can avoid doing a checksum when caching
 	common.WriteFile(path.Join(layer.Path, "feature.json"), featureJsonBytes)

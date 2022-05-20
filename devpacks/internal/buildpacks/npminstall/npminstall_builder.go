@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/buildpacks/libcnb"
@@ -97,24 +96,14 @@ func (contrib NpmInstallLayerContributor) Contribute(layer libcnb.Layer) (libcnb
 	}
 
 	// Execute npm install
-	cmd := exec.Command("npm", "install")
-	cmd.Env = os.Environ()
-	writer := log.Writer()
-	cmd.Stdout = writer
-	cmd.Stderr = writer
-	cmd.Dir = contrib.Context.Application.Path
-	if err := cmd.Run(); err != nil {
-		log.Fatal("npm install failed. ", err)
-	} else if cmd.ProcessState.ExitCode() != 0 {
-		log.Fatal("npm install failed with exit code ", cmd.ProcessState.ExitCode())
-	}
+	common.ExecCmd(contrib.Context.Application.Path, false, "npm", "install")
 
 	// Unfortunately, a "move" doesn't work  since we're across storage devices, so
 	// copy node_modules to layer for future reuse, but mark the layer for caching only
 	if err := os.MkdirAll(layer.Path, 0755); err != nil {
 		log.Fatal("Unable to create node_modules folder. ", err)
 	}
-	common.CpR(appNodeModules, layerNodeModules)
+	common.CpR(appNodeModules, layer.Path)
 
 	// Only keep the layer around for caching purposes since the
 	// node_modules folder is in the workspace folder in this scenario

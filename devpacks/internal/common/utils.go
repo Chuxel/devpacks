@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/fs"
 	"io/ioutil"
@@ -213,26 +214,30 @@ func ToJsonRawMessage(value interface{}) json.RawMessage {
 	return bytes
 }
 
-func DockerCli(workingDir string, captureOutput bool, args ...string) []byte {
+func ExecCmd(workingDir string, captureOutput bool, command string, args ...string) []byte {
 	var outputBytes bytes.Buffer
 	var errorOutput bytes.Buffer
 
-	dockerCommand := exec.Command("docker", args...)
-	dockerCommand.Env = os.Environ()
+	cmd := exec.Command(command, args...)
+	cmd.Env = os.Environ()
 	if captureOutput {
-		dockerCommand.Stdout = &outputBytes
-		dockerCommand.Stderr = &errorOutput
+		cmd.Stdout = &outputBytes
+		cmd.Stderr = &errorOutput
 	} else {
 		writer := log.Writer()
-		dockerCommand.Stdout = writer
-		dockerCommand.Stderr = writer
+		cmd.Stdout = writer
+		cmd.Stderr = writer
 	}
 	if workingDir != "" {
-		dockerCommand.Dir = workingDir
+		cmd.Dir = workingDir
 	}
-	commandErr := dockerCommand.Run()
-	if commandErr != nil || dockerCommand.ProcessState.ExitCode() != 0 || errorOutput.Len() != 0 {
-		log.Fatal("Docker command failed: " + errorOutput.String() + commandErr.Error())
+	if err := cmd.Run(); err != nil {
+		log.Fatal("Command", command, fmt.Sprint(args), " failed. ", err)
+	} else if cmd.ProcessState.ExitCode() != 0 {
+		log.Fatal("Command", command, fmt.Sprint(args), " failed with exit code ", cmd.ProcessState.ExitCode())
+		if captureOutput {
+			log.Fatal("Command output:", outputBytes.String())
+		}
 	}
 	return outputBytes.Bytes()
 }
