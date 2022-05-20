@@ -1,0 +1,4 @@
+{
+    "extensions": ["foo.foo"],
+    "runArgs": ["--privileged"]
+}

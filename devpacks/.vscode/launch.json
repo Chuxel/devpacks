@@ -161,6 +161,20 @@
 			},
 			"cwd": "${workspaceFolder}/test/test-project",
 			"preLaunchTask": "test-out-clean"
+		},
+		{
+            "name": "Debug devcontainer-extractor",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/devcontainer-extractor/main.go",
+			"args": [
+				"test_image",
+				"${workspaceFolder}/test/test-project",
+				"${workspaceFolder}/test/out"
+			],
+			"cwd": "${workspaceFolder}/test/test-project",
+			"preLaunchTask": "test-out-clean"
 		}
     ]
 }

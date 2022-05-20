@@ -11,10 +11,12 @@
         "hujson",
         "joho",
         "libcnb",
+        "Linkname",
         "npminstall",
         "npmstart",
         "packcli",
         "reqs",
+        "Typeflag",
         "Untar"
     ]
 }

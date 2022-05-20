@@ -66,6 +66,10 @@ func MergeProperties(existingVal interface{}, inVal interface{}) interface{} {
 		return inVal
 	}
 
+	if inVal == nil {
+		return existingVal
+	}
+
 	typ := reflect.TypeOf(inVal).Kind()
 	existingTyp := reflect.TypeOf(existingVal).Kind()
 	if typ != existingTyp {
@@ -87,13 +91,17 @@ func MergeProperties(existingVal interface{}, inVal interface{}) interface{} {
 		outVal := make(map[string]interface{})
 		rExVal := reflect.ValueOf(existingVal)
 		rInVal := reflect.ValueOf(inVal)
-		itr := rInVal.MapRange()
-		for itr.Next() {
-			rExistingMapVal := rExVal.MapIndex(itr.Key())
+		exItr := rExVal.MapRange()
+		for exItr.Next() {
+			outVal[exItr.Key().String()] = exItr.Value().Interface()
+		}
+		inItr := rInVal.MapRange()
+		for inItr.Next() {
+			rExistingMapVal := rExVal.MapIndex(inItr.Key())
 			if rExistingMapVal.Kind() == reflect.Invalid {
-				outVal[itr.Key().String()] = MergeProperties(nil, itr.Value().Interface())
+				outVal[inItr.Key().String()] = MergeProperties(nil, inItr.Value().Interface())
 			} else {
-				outVal[itr.Key().String()] = MergeProperties(rExistingMapVal.Interface(), itr.Value().Interface())
+				outVal[inItr.Key().String()] = MergeProperties(rExistingMapVal.Interface(), inItr.Value().Interface())
 			}
 		}
 		return outVal
@@ -203,6 +211,15 @@ func SliceUnion(slice1 []string, slice2 []string) []string {
 		union = AddToSliceIfUnique(union, sliceItem)
 	}
 	return union
+}
+
+func InterfaceToStringSlice(inter interface{}) []string {
+	value := reflect.ValueOf(inter)
+	newSlice := make([]string, value.Len())
+	for i := 0; i < value.Len(); i++ {
+		newSlice[i] = fmt.Sprint(value.Index(i))
+	}
+	return newSlice
 }
 
 func ToJsonRawMessage(value interface{}) json.RawMessage {
