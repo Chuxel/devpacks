@@ -8,6 +8,7 @@ import (
 	"github.com/buildpacks/libcnb"
 	"github.com/chuxel/devpacks/internal/buildpacks/base"
 	"github.com/chuxel/devpacks/internal/buildpacks/nodejs"
+	"github.com/chuxel/devpacks/internal/common"
 )
 
 type NpmInstallDetector struct {
@@ -32,6 +33,11 @@ func (detector NpmInstallDetector) AlwaysPass() bool {
 }
 
 func (detector NpmInstallDetector) DoDetect(context libcnb.DetectContext) (bool, []libcnb.BuildPlanRequire, map[string]interface{}, error) {
+	if common.ContainerImageBuildMode() == "devcontainer" {
+		log.Println("Skipping. Detected devcontainer build mode.")
+		return false, nil, nil, nil
+	}
+
 	// This buildpack always requires nodejs
 	reqs := []libcnb.BuildPlanRequire{{Name: nodejs.BUILDPACK_NAME, Metadata: map[string]interface{}{
 		"build":  true,

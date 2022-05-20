@@ -7,6 +7,10 @@
   id = "${publisher}/${repository}/buildpack-npminstall"
   uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-npminstall"
 
+[[buildpacks]]
+  id = "${publisher}/${repository}/buildpack-npmstart"
+  uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-npmstart"
+
 [[order]]
 
     [[order.group]]
@@ -14,6 +18,9 @@
 
     [[order.group]]
     id = "${publisher}/${repository}/buildpack-npminstall"
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-npmstart"
 
 [stack]
 id = "io.buildpacks.stacks.bionic"

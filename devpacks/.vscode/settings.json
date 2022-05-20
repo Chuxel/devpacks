@@ -11,6 +11,7 @@
         "joho",
         "libcnb",
         "npminstall",
+        "npmstart",
         "packcli",
         "reqs",
         "Untar"

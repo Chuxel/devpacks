@@ -1,7 +1,7 @@
 registry = ghcr.io
 publisher = chuxel
 repository = devpacks
-buildpacks = nodejs finalize npminstall
+buildpacks = nodejs finalize npminstall npmstart
 
 all: build package
 
