@@ -1,4 +1,8 @@
 {
-    "extensions": ["foo.foo"],
+    "customizations": {
+        "vscode": {
+            "extensions": ["foo.foo"]
+        }
+    },
     "runArgs": ["--privileged"]
 }

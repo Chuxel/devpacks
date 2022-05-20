@@ -11,7 +11,7 @@ import (
 
 	"github.com/buildpacks/libcnb"
 	"github.com/chuxel/devpacks/internal/buildpacks/base"
-	"github.com/chuxel/devpacks/internal/common"
+	"github.com/chuxel/devpacks/internal/common/utils"
 )
 
 //go:embed assets/check-symlink.sh
@@ -96,14 +96,14 @@ func (contrib NpmInstallLayerContributor) Contribute(layer libcnb.Layer) (libcnb
 	}
 
 	// Execute npm install
-	common.ExecCmd(contrib.Context.Application.Path, false, "npm", "install")
+	utils.ExecCmd(contrib.Context.Application.Path, false, "npm", "install")
 
 	// Unfortunately, a "move" doesn't work  since we're across storage devices, so
 	// copy node_modules to layer for future reuse, but mark the layer for caching only
 	if err := os.MkdirAll(layer.Path, 0755); err != nil {
 		log.Fatal("Unable to create node_modules folder. ", err)
 	}
-	common.CpR(appNodeModules, layer.Path)
+	utils.CpR(appNodeModules, layer.Path)
 
 	// Only keep the layer around for caching purposes since the
 	// node_modules folder is in the workspace folder in this scenario

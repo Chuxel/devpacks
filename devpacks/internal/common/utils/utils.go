@@ -1,4 +1,4 @@
-package common
+package utils
 
 import (
 	"archive/tar"
@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -259,11 +260,11 @@ func ExecCmd(workingDir string, captureOutput bool, command string, args ...stri
 	return outputBytes.Bytes()
 }
 
-func UntarBytes(tarBytes []byte, destination string, strip int) error {
-	return Untar(bytes.NewReader(tarBytes), destination, strip)
+func UntarBytes(tarBytes []byte, destination string, strip int) {
+	Untar(bytes.NewReader(tarBytes), destination, strip)
 }
 
-func Untar(reader io.Reader, destination string, strip int) error {
+func Untar(reader io.Reader, destination string, strip int) {
 	var err error
 	if destination, err = filepath.Abs(destination); err != nil {
 		log.Fatal("Failed to convert path to absolute path. ", err)
@@ -271,7 +272,7 @@ func Untar(reader io.Reader, destination string, strip int) error {
 
 	gzReader, err := gzip.NewReader(reader)
 	if err != nil {
-		return err
+		log.Fatal("Unable to create gzip reader. ", err)
 	}
 	defer gzReader.Close()
 
@@ -282,7 +283,7 @@ func Untar(reader io.Reader, destination string, strip int) error {
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return err
+			log.Fatal("Error reading tar file. ", err)
 		}
 
 		// Strip out specified number of folders from target path
@@ -323,29 +324,29 @@ func Untar(reader io.Reader, destination string, strip int) error {
 		case tar.TypeDir:
 			if _, err := os.Stat(targetPath); err != nil {
 				if err := os.MkdirAll(targetPath, fs.FileMode(header.Mode)); err != nil {
-					return err
+					log.Fatal("Failed to create directory. ", err)
 				}
 			}
 		case tar.TypeSymlink:
 			if err := os.Symlink(linkPath, targetPath); err != nil {
-				return err
+				log.Fatal("Failed to create symlink. ", err)
 			}
 		case tar.TypeLink:
 			if err := os.Link(linkPath, targetPath); err != nil {
-				return err
+				log.Fatal("Failed to create link. ", err)
 			}
 		case tar.TypeReg:
 			file, err := os.OpenFile(targetPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, fs.FileMode(header.Mode))
 			if err != nil {
-				return err
+				log.Fatal("Failed to open file. ", err)
 			}
 			defer file.Close()
 			if _, err = io.Copy(file, tarReader); err != nil {
-				return err
+				log.Fatal("Failed to copy file. ", err)
 			}
 		}
 	}
-	return nil
+	return
 }
 
 func NewSemverRange(version string) semver.Range {
@@ -411,4 +412,20 @@ func NewSemverRange(version string) semver.Range {
 	}
 
 	return semver.MustParseRange(requestedVersion)
+}
+
+func DownloadBytesFromUrl(dlUrl string) []byte {
+	response, err := http.Get(dlUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if response.StatusCode != 200 {
+		log.Fatal("Got status code ", response.StatusCode, " for ", dlUrl)
+	}
+	defer response.Body.Close()
+	outBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal("Failed to read response body. ", err)
+	}
+	return outBytes
 }

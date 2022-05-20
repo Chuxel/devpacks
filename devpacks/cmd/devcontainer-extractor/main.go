@@ -6,10 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/chuxel/devpacks/internal/common"
+	"github.com/chuxel/devpacks/internal/common/devcontainer"
+	"github.com/chuxel/devpacks/internal/common/utils"
 )
 
-const LABEL_METADATA_TEMPLATE = "{{ index .Config.Labels \"" + common.DEVCONTAINER_JSON_LABEL_NAME + "\"}}"
+const LABEL_METADATA_TEMPLATE = "{{ index .Config.Labels \"" + devcontainer.DEVCONTAINER_JSON_LABEL_NAME + "\"}}"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -27,13 +28,14 @@ func main() {
 		outPath = os.Args[3]
 	}
 
-	imageLabelBytes := common.ExecCmd("", true, "docker", "inspect", "-f", LABEL_METADATA_TEMPLATE, imageName)
-	imageDevContainerJson := common.DevContainer{Properties: make(map[string]interface{})}
+	imageLabelBytes := utils.ExecCmd("", true, "docker", "inspect", "-f", LABEL_METADATA_TEMPLATE, imageName)
+	imageDevContainerJson := devcontainer.DevContainer{Properties: make(map[string]interface{})}
+
 	if err := json.Unmarshal(imageLabelBytes, &imageDevContainerJson.Properties); err != nil {
 		log.Fatal("Failed to parse devcontainer.json content from image label", err)
 	}
 
-	localDevContainerJson := common.DevContainer{Properties: make(map[string]interface{})}
+	localDevContainerJson := devcontainer.DevContainer{Properties: make(map[string]interface{})}
 	if devContainerJsonPath := localDevContainerJson.Load(projectPath); devContainerJsonPath == "" {
 		log.Println("No devcontainer.json found in current directory. Skipping load.")
 	}
@@ -54,7 +56,7 @@ func main() {
 		if err := os.MkdirAll(outPath, 0755); err != nil {
 			log.Fatal("Failed to create output directory: ", outPath)
 		}
-		if err := common.WriteFile(filepath.Join(outPath, "devcontainer.json.merged"), localDevContainerJsonBytes); err != nil {
+		if err := utils.WriteFile(filepath.Join(outPath, "devcontainer.json.merged"), localDevContainerJsonBytes); err != nil {
 			log.Fatal("Failed to write devcontainer.json.merged file: ", err)
 		}
 		log.Println("devcontainer.json.merged file written to current directory!")

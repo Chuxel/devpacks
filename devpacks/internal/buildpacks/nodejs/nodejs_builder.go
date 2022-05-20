@@ -4,9 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -15,15 +13,12 @@ import (
 	"github.com/blang/semver/v4"
 	"github.com/buildpacks/libcnb"
 	"github.com/chuxel/devpacks/internal/buildpacks/base"
-	"github.com/chuxel/devpacks/internal/common"
+	"github.com/chuxel/devpacks/internal/common/devcontainer"
+	"github.com/chuxel/devpacks/internal/common/utils"
 )
 
-//go:embed assets/feature.json
-var featureJsonBytes []byte
-
-// Copy of https://nodejs.org/download/release/index.json
-//go:embed assets/index.json
-var nodeIndexJsonBytes []byte
+//go:embed assets/devcontainer.json
+var devcontainerJsonBytes []byte
 
 type NodeJsRuntimeBuilder struct {
 	// Implements base.DefaultBuilder
@@ -107,16 +102,16 @@ func (contrib NodeJsRuntimeLayerContributor) Contribute(layer libcnb.Layer) (lib
 		// Add NODE_VERSION env var
 		layer.SharedEnvironment.Default("NODE_VERSION", nodeVersion)
 		// Update lookup feature.json search path for finalize buildpack
-		layer.BuildEnvironment.Append(common.FINALIZE_JSON_SEARCH_PATH_ENV_VAR_NAME, string(filepath.ListSeparator), layer.Path)
-		// Set the layer types based on what was set for the contributor
+		layer.BuildEnvironment.Append(devcontainer.FINALIZE_JSON_SEARCH_PATH_ENV_VAR_NAME, string(filepath.ListSeparator), layer.Path)
 	}
 
+	// Set the layer types based on what was set for the contributor
 	layer.LayerTypes = contrib.LayerTypes
 	layer.Metadata = map[string]interface{}{
 		"node_version": nodeVersion,
 	}
 	// Write feature.json in all cases since its quick and we can avoid doing a checksum when caching
-	common.WriteFile(path.Join(layer.Path, "feature.json"), featureJsonBytes)
+	utils.WriteFile(path.Join(layer.Path, "devcontainer.json"), devcontainerJsonBytes)
 
 	return layer, nil
 }
@@ -128,30 +123,21 @@ func downloadAndUntarNode(nodeVersion string, targetPath string) {
 	}
 
 	// Download file into memory so we can do a checksum
-	dl_arch := runtime.GOARCH
-	if dl_arch == "amd64" {
-		dl_arch = "x64"
+	dlArch := runtime.GOARCH
+	if dlArch == "amd64" {
+		dlArch = "x64"
 	}
-	dl_url := "https://nodejs.org/download/release/v" + nodeVersion + "/node-v" + nodeVersion + "-linux-" + dl_arch + ".tar.gz"
-	response, err := http.Get(dl_url)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if response.StatusCode != 200 {
-		log.Fatal("Got status code ", response.StatusCode, " for ", dl_url)
-	}
-	tgzBytes, err := io.ReadAll(response.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
+	tgzBytes := utils.DownloadBytesFromUrl("https://nodejs.org/download/release/v" + nodeVersion + "/node-v" + nodeVersion + "-linux-" + dlArch + ".tar.gz")
 	// TODO: Verify checksum and signature -- download SHASUM256.txt from the same spot
 
 	// Untar into the target location
-	common.UntarBytes(tgzBytes, targetPath, 1)
+	utils.UntarBytes(tgzBytes, targetPath, 1)
 }
 
 func findRealNodeVersion(requestedVersion string) string {
-	// Parse copy of https://nodejs.org/download/release/index.json
+	// Parse https://nodejs.org/download/release/index.json
+	// TODO: Should probably cache this file since it is partly used to identify if we have a cache hit, but its small too
+	nodeIndexJsonBytes := utils.DownloadBytesFromUrl("https://nodejs.org/download/release/index.json")
 	type NodeIndexVersion struct {
 		Version string
 	}
@@ -159,21 +145,21 @@ func findRealNodeVersion(requestedVersion string) string {
 	if err := json.Unmarshal(nodeIndexJsonBytes, &nodeIndexVersions); err != nil {
 		log.Fatal(err)
 	}
-	nodeVersions := semver.Versions{}
+	versions := semver.Versions{}
 	for _, nodeIndexVersion := range nodeIndexVersions {
 		version, err := semver.ParseTolerant(nodeIndexVersion.Version)
 		if err != nil {
 			log.Fatal(err)
 		}
-		nodeVersions = append(nodeVersions, version)
+		versions = append(versions, version)
 	}
-	semver.Sort(nodeVersions)
+	semver.Sort(versions)
 
 	if requestedVersion != "latest" {
-		expectedRange := common.NewSemverRange(requestedVersion)
+		expectedRange := utils.NewSemverRange(requestedVersion)
 		// Sorted in ascending order, so run through in reverse order to get the latest matching
-		for i := len(nodeVersions) - 1; i >= 0; i-- {
-			nodeVersion := nodeVersions[i]
+		for i := len(versions) - 1; i >= 0; i-- {
+			nodeVersion := versions[i]
 			if expectedRange(nodeVersion) {
 				return nodeVersion.FinalizeVersion()
 			}
@@ -182,7 +168,7 @@ func findRealNodeVersion(requestedVersion string) string {
 		log.Fatal("Unable to match node version", requestedVersion)
 	}
 
-	return nodeVersions[nodeVersions.Len()-1].FinalizeVersion()
+	return versions[len(versions)-1].FinalizeVersion()
 }
 
 func (contrib NodeJsRuntimeLayerContributor) packageJsonVersion() (string, bool) {

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/buildpacks/libcnb"
-	"github.com/chuxel/devpacks/internal/common"
+	"github.com/chuxel/devpacks/internal/common/devcontainer"
 )
 
 type DefaultBuilder interface {
@@ -18,7 +18,7 @@ type DefaultBuilder interface {
 }
 
 func DefaultBuild(builder DefaultBuilder, context libcnb.BuildContext) (libcnb.BuildResult, error) {
-	buildMode := common.ContainerImageBuildMode()
+	buildMode := devcontainer.ContainerImageBuildMode()
 	log.Println("Devpack path:", context.Buildpack.Path)
 	log.Println("Application path:", context.Application.Path)
 	log.Println("Build mode:", buildMode)
@@ -55,7 +55,7 @@ func DefaultBuild(builder DefaultBuilder, context libcnb.BuildContext) (libcnb.B
 	}
 
 	// Use reflection to create a contributor based on the type assigned to the builder
-	result.Layers = append(result.Layers, builder.NewLayerContributor(common.ContainerImageBuildMode(), layerTypes, context))
+	result.Layers = append(result.Layers, builder.NewLayerContributor(buildMode, layerTypes, context))
 
 	log.Printf("Number of layer contributors: %d", len(result.Layers))
 	log.Printf("Unmet entries: %d", len(result.Unmet))

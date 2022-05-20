@@ -8,8 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/buildpacks/libcnb"
-	"github.com/chuxel/devpacks/internal/common"
-	"github.com/tailscale/hujson"
+	"github.com/chuxel/devpacks/internal/common/devcontainer"
 )
 
 type FinalizeBuilder struct {
@@ -18,7 +17,7 @@ type FinalizeBuilder struct {
 }
 
 func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
-	buildMode := common.ContainerImageBuildMode()
+	buildMode := devcontainer.ContainerImageBuildMode()
 	log.Println("Devpack path:", context.Buildpack.Path)
 	log.Println("Application path:", context.Application.Path)
 	log.Println("Build mode:", buildMode)
@@ -29,42 +28,24 @@ func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildR
 
 	// This implementation assumes https://github.com/devcontainers/spec/issues/2 is done. We'll
 	// create a small utility to do the property conversion assuming these properties are missing.
-	mergedDevContainerJson := common.DevContainer{Properties: make(map[string]interface{})}
-	featureJsonSearchPath := os.Getenv(common.FINALIZE_JSON_SEARCH_PATH_ENV_VAR_NAME)
-	featureJsonLocs := filepath.SplitList(featureJsonSearchPath)
-	// For each path in search list
-	for _, loc := range featureJsonLocs {
-		filename := filepath.Join(loc, "feature.json")
-		log.Println("Processing ", filename)
-		// Load jsonc file
-		featureConfigBytes, err := os.ReadFile(filename)
-		if err != nil {
-			log.Fatal(err)
-		}
-		ast, err := hujson.Parse(featureConfigBytes)
-		if err != nil {
-			log.Fatal(err)
-		}
-		ast.Standardize()
-		content := ast.Pack()
-		inMap := make(map[string]interface{})
-		if err := json.Unmarshal(content, &inMap); err != nil {
-			log.Fatal(err)
-		}
-
-		// Merge content
-		mergedDevContainerJson.MergePropertyMap(inMap)
+	mergedDevContainerJson := devcontainer.DevContainer{Properties: make(map[string]interface{})}
+	devcontainerJsonSearchPath := os.Getenv(devcontainer.FINALIZE_JSON_SEARCH_PATH_ENV_VAR_NAME)
+	devcontainerJsonLocs := filepath.SplitList(devcontainerJsonSearchPath)
+	// For each path in search list and merge properties
+	for _, loc := range devcontainerJsonLocs {
+		devContainer := devcontainer.NewDevContainer(loc)
+		mergedDevContainerJson.Merge(devContainer)
 	}
 
 	// Add the result to the label
-	log.Println("Applying merged json content to label ", common.DEVCONTAINER_JSON_LABEL_NAME)
+	log.Println("Applying merged json content to label ", devcontainer.DEVCONTAINER_JSON_LABEL_NAME)
 	devContainerJsonBytes, err := json.Marshal(mergedDevContainerJson.Properties)
 	if err != nil {
 		log.Fatal(err)
 	}
 	result.Labels = []libcnb.Label{
 		{
-			Key:   common.DEVCONTAINER_JSON_LABEL_NAME,
+			Key:   devcontainer.DEVCONTAINER_JSON_LABEL_NAME,
 			Value: string(devContainerJsonBytes),
 		},
 	}

@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/buildpacks/libcnb"
-	"github.com/chuxel/devpacks/internal/common"
+	"github.com/chuxel/devpacks/internal/common/devcontainer"
 )
 
 type FinalizeDetector struct {
@@ -14,7 +14,7 @@ type FinalizeDetector struct {
 }
 
 func (detector FinalizeDetector) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) {
-	buildMode := common.ContainerImageBuildMode()
+	buildMode := devcontainer.ContainerImageBuildMode()
 	log.Println("Devpack path:", context.Buildpack.Path)
 	log.Println("Application path:", context.Application.Path)
 	log.Println("Build mode:", buildMode)
