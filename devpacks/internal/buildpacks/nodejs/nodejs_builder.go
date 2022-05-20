@@ -186,7 +186,7 @@ func findRealNodeVersion(requestedVersion string) string {
 }
 
 func (contrib NodeJsRuntimeLayerContributor) packageJsonVersion() (string, bool) {
-	packageJsonPath := path.Join(contrib.Context.Application.Path, "package.json")
+	packageJsonPath := filepath.Join(contrib.Context.Application.Path, "package.json")
 	// Get engine value for nodejs if it exists in package.json
 	if _, err := os.Stat(packageJsonPath); err == nil {
 		type PackageJson struct {
@@ -196,10 +196,10 @@ func (contrib NodeJsRuntimeLayerContributor) packageJsonVersion() (string, bool)
 
 		content, err := os.ReadFile(packageJsonPath)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Failed to read package.json. ", err)
 		}
 		if err := json.Unmarshal(content, &packageJson); err != nil {
-			log.Fatal(err)
+			log.Fatal("Failed to parse package.json. ", err)
 		}
 		version, hasKey := packageJson.Engines["node"]
 		return version, hasKey
@@ -209,12 +209,12 @@ func (contrib NodeJsRuntimeLayerContributor) packageJsonVersion() (string, bool)
 }
 
 func (contrib NodeJsRuntimeLayerContributor) versionInFile(name string) (string, bool) {
-	versionFilePath := path.Join(contrib.Context.Application.Path, name)
+	versionFilePath := filepath.Join(contrib.Context.Application.Path, name)
 	// Get engine value for nodejs if it exists in package.json
 	if _, err := os.Stat(versionFilePath); err == nil {
 		content, err := os.ReadFile(versionFilePath)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Failed to read ", name, ". ", err)
 		}
 		if content[0] == 'v' {
 			return fmt.Sprint(content[1:]), true

@@ -3,6 +3,7 @@
         "blang",
         "BUILDPACK",
         "buildpacks",
+        "devcontainer",
         "devpack",
         "devpacks",
         "godotenv",

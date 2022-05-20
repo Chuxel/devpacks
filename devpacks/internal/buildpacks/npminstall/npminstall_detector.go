@@ -29,7 +29,7 @@ func (detector NpmInstallDetector) Name() string {
 }
 
 func (detector NpmInstallDetector) AlwaysPass() bool {
-	return false
+	return true
 }
 
 func (detector NpmInstallDetector) DoDetect(context libcnb.DetectContext) (bool, []libcnb.BuildPlanRequire, map[string]interface{}, error) {
@@ -40,8 +40,7 @@ func (detector NpmInstallDetector) DoDetect(context libcnb.DetectContext) (bool,
 
 	// This buildpack always requires nodejs
 	reqs := []libcnb.BuildPlanRequire{{Name: nodejs.BUILDPACK_NAME, Metadata: map[string]interface{}{
-		"build":  true,
-		"launch": true,
+		"build": true,
 	}}}
 
 	// Look for package json in the root

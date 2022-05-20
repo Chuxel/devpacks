@@ -29,10 +29,10 @@ func DefaultBuild(builder DefaultBuilder, context libcnb.BuildContext) (libcnb.B
 
 	overrideLayerTypes := map[string]bool{}
 	for _, entry := range context.Plan.Entries {
-		if entry.Name != builder.Name() {
+		if entry.Name == builder.Name() {
 			// If the entry is for this buildpack, merge values of any layer type overrides set in the entry's metadata
-			for _, key := range []string{"Build", "Launch", "Cache"} {
-				entryValue, containsKey := entry.Metadata[strings.ToLower(key)]
+			for _, key := range []string{"build", "launch", "cache"} {
+				entryValue, containsKey := entry.Metadata[key]
 				if containsKey {
 					existingValue, hasExistingValue := overrideLayerTypes[key]
 					if hasExistingValue {
@@ -48,9 +48,9 @@ func DefaultBuild(builder DefaultBuilder, context libcnb.BuildContext) (libcnb.B
 		}
 	}
 	// Override defaults as appropriate
-	layerTypes := libcnb.LayerTypes{Build: true, Launch: true, Cache: true}
+	layerTypes := libcnb.LayerTypes{Build: true, Launch: buildMode == "devcontainer", Cache: true}
 	for key, value := range overrideLayerTypes {
-		field := reflect.ValueOf(&layerTypes).Elem().FieldByName(key)
+		field := reflect.ValueOf(&layerTypes).Elem().FieldByName(strings.ToUpper(key[0:1]) + key[1:])
 		field.Set(reflect.ValueOf(value))
 	}
 
