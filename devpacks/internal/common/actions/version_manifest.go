@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"runtime"
 
 	"github.com/blang/semver/v4"
 	"github.com/chuxel/devpacks/internal/common/utils"
@@ -70,11 +71,33 @@ func (manifest VersionManifest) FindVersion(semverRange string, stableOnly bool)
 				return nodeVersion.FinalizeVersion()
 			}
 		}
-
 		log.Fatal("Unable to match node version", semverRange)
 	}
 
 	return versions[len(versions)-1].FinalizeVersion()
+}
+
+func (manifest VersionManifest) FindDownloadUrl(version string) string {
+	dlArch := runtime.GOARCH
+	if dlArch == "amd64" {
+		dlArch = "x64"
+	}
+	entry := manifest.FindEntry(version)
+	for _, file := range entry.Files {
+		if file.Arch == dlArch && file.Platform == "linux" {
+			// If a PlatformVersion value is set, then the download is specific to a distro version.
+			// Since not all are, verify the distro only if PlatformVersion is actually set.
+			if file.PlatformVersion != "" {
+				osRelease := utils.ReadLinuxDistroInfo()
+				if osRelease.Version == file.PlatformVersion || osRelease.VersionId == file.PlatformVersion {
+					return file.DownloadUrl
+				}
+			} else {
+				return file.DownloadUrl
+			}
+		}
+	}
+	return ""
 }
 
 func NewVersionManifest(manifestPath string) VersionManifest {

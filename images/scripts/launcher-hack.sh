@@ -9,7 +9,7 @@
 # More info on launcher environment: https://github.com/buildpacks/spec/blob/main/platform.md#launch-environment
 snippet="$(cat << 'EOF'
 # Ensure all interactive or login shells are initalized via /cnb/lifecycle/launcher (which is also the default entrypoint)
-if [ ! -z "${CNB_APP_DIR}" ] && [ -z "${DCNB_ENV_LOADED}" ] && [ -e "/cnb/lifecycle/launcher" ]; then export DCNB_ENV_LOADED=true; mapfile -d $'\0' _cmd_line < /proc/$$/cmdline; exec /cnb/lifecycle/launcher "${_cmd_line[@]//\"/\\\"}"; fi
+if [ ! -z "${CNB_APP_DIR}" ] && [ -e "/cnb/lifecycle/launcher" ]; then mapfile -d $'\0' _cmd_line < /proc/$$/cmdline; exec /cnb/lifecycle/launcher "${_cmd_line[@]//\"/\\\"}"; fi
 EOF
 )"
 

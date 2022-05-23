@@ -27,6 +27,7 @@ func DefaultBuild(builder DefaultBuilder, context libcnb.BuildContext) (libcnb.B
 
 	result := libcnb.NewBuildResult()
 
+	hasEntry := false
 	overrideLayerTypes := map[string]bool{}
 	for _, entry := range context.Plan.Entries {
 		if entry.Name == builder.Name() {
@@ -42,11 +43,19 @@ func DefaultBuild(builder DefaultBuilder, context libcnb.BuildContext) (libcnb.B
 					}
 				}
 			}
+			hasEntry = true
 		} else {
 			// Otherwise consider the requirement unmet
 			result.Unmet = append(result.Unmet, libcnb.UnmetPlanEntry{Name: entry.Name})
 		}
 	}
+	// There could be scenarios where the capability is provided, but nothing
+	// requires it. In this case, the buildpack should not execute its steps.
+	if !hasEntry {
+		log.Println("Buildpack", builder.Name(), "not required. Skipping.")
+		return result, nil
+	}
+
 	// Override defaults as appropriate
 	layerTypes := libcnb.LayerTypes{Build: true, Launch: buildMode == "devcontainer", Cache: true}
 	for key, value := range overrideLayerTypes {

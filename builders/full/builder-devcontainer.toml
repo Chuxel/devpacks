@@ -4,6 +4,10 @@
   uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-nodejs"
 
 [[buildpacks]]
+  id = "${publisher}/${repository}/buildpack-cpython"
+  uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-cpython"
+
+[[buildpacks]]
   id = "${publisher}/${repository}/buildpack-finalize"
   uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-finalize"
 
@@ -11,6 +15,9 @@
 
     [[order.group]]
     id = "${publisher}/${repository}/buildpack-nodejs"
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-cpython"
 
     [[order.group]]
     id = "${publisher}/${repository}/buildpack-finalize"

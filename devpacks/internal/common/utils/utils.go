@@ -20,11 +20,50 @@ import (
 	"strings"
 
 	"github.com/blang/semver/v4"
+	"github.com/joho/godotenv"
 	"gonum.org/v1/gonum/stat/combin"
 )
 
 type NonZeroExitError struct {
 	ExitCode int
+}
+
+type LinuxDistroInfo struct {
+	Name         string
+	PrettyName   string
+	VersionId    string
+	Version      string
+	Id           string
+	IdLike       string
+	HomeUrl      string
+	SupportUrl   string
+	BugReportUrl string
+}
+
+var cachedLinuxDistroInfo LinuxDistroInfo = LinuxDistroInfo{}
+
+func ReadLinuxDistroInfo() LinuxDistroInfo {
+	if cachedLinuxDistroInfo.Name == "" {
+		if _, err := os.Stat("/etc/os-release"); err != nil {
+			log.Fatal("/etc/os-release not found.")
+		}
+		osRelease, err := godotenv.Read("/etc/os-release")
+		if err != nil {
+			log.Fatal("Unable to read /etc/os-release.")
+		}
+		cachedLinuxDistroInfo = LinuxDistroInfo{
+			Name:         osRelease["NAME"],
+			PrettyName:   osRelease["PRETTY_NAME"],
+			VersionId:    osRelease["VERSION_ID"],
+			Version:      osRelease["VERSION"],
+			Id:           osRelease["ID"],
+			IdLike:       osRelease["ID_LIKE"],
+			HomeUrl:      osRelease["HOME_URL"],
+			SupportUrl:   osRelease["SUPPORT_URL"],
+			BugReportUrl: osRelease["BUG_REPORT_URL"],
+		}
+	}
+	return cachedLinuxDistroInfo
 }
 
 func (err NonZeroExitError) Error() string {
@@ -287,8 +326,8 @@ func Untar(reader io.Reader, destination string, strip int) {
 		}
 
 		// Strip out specified number of folders from target path
+		typeflag := rune(header.Typeflag)
 		targetRelPath := header.Name
-		linkRelPath := ""
 		if strip > 0 {
 			tarFilePathParts := strings.Split(header.Name, string(os.PathSeparator))
 			if len(tarFilePathParts) <= strip {
@@ -296,10 +335,10 @@ func Untar(reader io.Reader, destination string, strip int) {
 			}
 			basePath := filepath.Join(tarFilePathParts[:strip]...)
 			targetRelPath, _ = filepath.Rel(basePath, targetRelPath)
-			if header.Typeflag == tar.TypeLink || header.Typeflag == tar.TypeSymlink {
-				linkRelPath = filepath.Join(filepath.Dir(targetRelPath), header.Linkname)
-			}
-
+		}
+		linkRelPath := header.Linkname
+		if linkRelPath != "" {
+			linkRelPath = filepath.Join(filepath.Dir(targetRelPath), header.Linkname)
 		}
 
 		// Convert to absolute paths
@@ -310,17 +349,18 @@ func Untar(reader io.Reader, destination string, strip int) {
 		if !strings.HasPrefix(targetPath, destination) {
 			continue
 		}
-		if header.Typeflag == tar.TypeLink || header.Typeflag == tar.TypeSymlink {
+		if typeflag == tar.TypeLink || typeflag == tar.TypeSymlink {
 			if linkPath, err = filepath.Abs(filepath.Join(destination, linkRelPath)); err != nil {
 				log.Fatal("Failed to convert path to absolute path. ", err)
 			}
 			if !strings.HasPrefix(linkPath, destination) {
 				continue
 			}
+			log.Println("Typeflag:", header.Typeflag, "targetRelPath:", targetRelPath, "linkRelPath:", linkRelPath)
 		}
 
 		// Process contents
-		switch header.Typeflag {
+		switch typeflag {
 		case tar.TypeDir:
 			if _, err := os.Stat(targetPath); err != nil {
 				if err := os.MkdirAll(targetPath, fs.FileMode(header.Mode)); err != nil {

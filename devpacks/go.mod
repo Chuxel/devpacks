@@ -6,6 +6,7 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/tailscale/hujson v0.0.0-20220506213045-af5ed07155e5
 	gonum.org/v1/gonum v0.11.0
+	github.com/joho/godotenv v1.4.0
 	github.com/blang/semver/v4 v4.0.0
 )
 
