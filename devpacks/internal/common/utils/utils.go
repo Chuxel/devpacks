@@ -289,9 +289,9 @@ func ExecCmd(workingDir string, captureOutput bool, command string, args ...stri
 		cmd.Dir = workingDir
 	}
 	if err := cmd.Run(); err != nil {
-		log.Fatal("Command", command, fmt.Sprint(args), " failed. ", err)
+		log.Fatal("Command ", command, fmt.Sprint(args), " failed. ", err)
 	} else if cmd.ProcessState.ExitCode() != 0 {
-		log.Fatal("Command", command, fmt.Sprint(args), " failed with exit code ", cmd.ProcessState.ExitCode())
+		log.Fatal("Command ", command, fmt.Sprint(args), " failed with exit code ", cmd.ProcessState.ExitCode())
 		if captureOutput {
 			log.Fatal("Command output:", outputBytes.String())
 		}

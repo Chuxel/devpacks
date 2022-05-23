@@ -2,7 +2,7 @@
     "customizations": {
         "vscode": {
 			"settings": { 
-				"python.defaultInterpreterPath": "${layer.Path}"
+				"python.defaultInterpreterPath": "{{layerDir}}"
 			},
 			
 			"extensions": [

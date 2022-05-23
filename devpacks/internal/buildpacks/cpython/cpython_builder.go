@@ -98,10 +98,10 @@ func (contrib CPythonLayerContributor) Contribute(layer libcnb.Layer) (libcnb.La
 	}
 
 	if install {
-		log.Println("Downloading Python ", version, "...")
 		dlUrl := manifest.FindDownloadUrl(version)
-		log.Println("Expanding tgz...")
+		log.Println("Downloading python ", version, " from ", dlUrl)
 		tgzBytes := utils.DownloadBytesFromUrl(dlUrl)
+		log.Println("Expanding tgz...")
 		utils.UntarBytes(tgzBytes, layer.Path, 0)
 		// Delete source tarball
 		if err := os.Remove(filepath.Join(layer.Path, "Python-"+version+".tgz")); err != nil {
@@ -110,7 +110,7 @@ func (contrib CPythonLayerContributor) Contribute(layer libcnb.Layer) (libcnb.La
 
 		// Recursively fix hard coded paths in files. Several files have hard coded to expected Actions spot
 		log.Println("Fixing hardcoded paths...")
-		contrib.fixPathR(filepath.Join(layer.Path, "bin"), "/opt/hostedtoolcache/Python/"+version+"/"+manifest.OSArch(), layer.Path)
+		contrib.fixPathR(filepath.Join(layer.Path, "bin"), "#!/opt/hostedtoolcache/Python/"+version+"/"+manifest.OSArch(), layer.Path)
 
 		// Add PYTHON_VERSION env var
 		layer.SharedEnvironment.Default("PYTHON_VERSION", version)
@@ -123,8 +123,9 @@ func (contrib CPythonLayerContributor) Contribute(layer libcnb.Layer) (libcnb.La
 	layer.Metadata = map[string]interface{}{
 		"python_version": version,
 	}
-	// Write feature.json in all cases since its quick and we can avoid doing a checksum when caching
-	utils.WriteFile(path.Join(layer.Path, "devcontainer.json"), devcontainerJsonBytes)
+	// Write devcontainer.json in all cases since its quick and we can avoid doing a checksum when caching
+	updatedBytes := bytes.ReplaceAll(devcontainerJsonBytes, []byte("{{layerDir}}"), []byte(layer.Path))
+	utils.WriteFile(path.Join(layer.Path, "devcontainer.json"), updatedBytes)
 
 	return layer, nil
 }
@@ -137,7 +138,8 @@ func (contrib CPythonLayerContributor) versionInFile(name string, prefix string)
 		if err != nil {
 			log.Fatal("Failed to read ", name, ". ", err)
 		}
-		lines := strings.Split(fmt.Sprint(content), "\n")
+		text := string(content)
+		lines := strings.Split(text, "\n")
 		for _, line := range lines {
 			line := strings.TrimSpace(line)
 			if strings.HasPrefix(line, prefix) {

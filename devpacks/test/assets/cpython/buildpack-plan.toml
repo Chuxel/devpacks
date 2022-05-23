@@ -1,21 +1,15 @@
 [[entries]]
-  name = "nodejs"
+  name = "cpython"
   [entries.metadata]
     build = false
     cache = true
     launch = false
 
 [[entries]]
-  name = "nodejs"
+  name = "cpython"
   [entries.metadata]
     build = true
     cache = false
-
-[[entries]]
-  name = "npminstall"
-
-[[entries]]
-  name = "npmstart"
 
 [[entries]]
   name = "devpack-finalize"
