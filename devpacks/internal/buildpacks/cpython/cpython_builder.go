@@ -1,13 +1,13 @@
 package cpython
 
 import (
+	"bytes"
 	_ "embed"
 	"fmt"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/buildpacks/libcnb"
@@ -98,7 +98,9 @@ func (contrib CPythonLayerContributor) Contribute(layer libcnb.Layer) (libcnb.La
 	}
 
 	if install {
+		log.Println("Downloading Python ", version, "...")
 		dlUrl := manifest.FindDownloadUrl(version)
+		log.Println("Expanding tgz...")
 		tgzBytes := utils.DownloadBytesFromUrl(dlUrl)
 		utils.UntarBytes(tgzBytes, layer.Path, 0)
 		// Delete source tarball
@@ -106,26 +108,9 @@ func (contrib CPythonLayerContributor) Contribute(layer libcnb.Layer) (libcnb.La
 			log.Fatal("Unable to remove Python source code tgz. ", err)
 		}
 
-		// Fix #! paths for scripts - These are hard coded to expected Actions spot
-		regexp := regexp.MustCompile("#!/opt/hostedtoolcache/Python/.*")
-		bins, err := os.ReadDir(filepath.Join(layer.Path, "bin"))
-		if err != nil {
-			log.Fatal("Failed to read contents of bin folder. ", err)
-		}
-		for _, bin := range bins {
-			binPath := filepath.Join(layer.Path, "bin", bin.Name())
-			contents, err := os.ReadFile(binPath)
-			if err != nil {
-				log.Fatal("Failed to read file ", binPath, ". ", err)
-			}
-			if regexp.Match(contents) {
-				updated := regexp.ReplaceAll(contents, []byte("#!"+filepath.Join(layer.Path, "bin", "python3")))
-				utils.WriteFile(binPath, updated)
-				if err != nil {
-					log.Fatal("Failed to write file ", binPath, ". ", err)
-				}
-			}
-		}
+		// Recursively fix hard coded paths in files. Several files have hard coded to expected Actions spot
+		log.Println("Fixing hardcoded paths...")
+		contrib.fixPathR(filepath.Join(layer.Path, "bin"), "/opt/hostedtoolcache/Python/"+version+"/"+manifest.OSArch(), layer.Path)
 
 		// Add PYTHON_VERSION env var
 		layer.SharedEnvironment.Default("PYTHON_VERSION", version)
@@ -162,4 +147,29 @@ func (contrib CPythonLayerContributor) versionInFile(name string, prefix string)
 	}
 
 	return "", false
+}
+
+func (contrib CPythonLayerContributor) fixPathR(dir string, oldPath string, newPath string) {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		log.Fatal("Failed to read contents of ", dir, " folder. ", err)
+	}
+	for _, file := range files {
+		fullPath := filepath.Join(dir, file.Name())
+		if file.IsDir() {
+			contrib.fixPathR(filepath.Join(dir, file.Name()), oldPath, newPath)
+		} else {
+			contents, err := os.ReadFile(fullPath)
+			if err != nil {
+				log.Fatal("Failed to read file ", fullPath, ". ", err)
+			}
+			if bytes.Contains(contents, []byte(oldPath)) {
+				newContents := bytes.Replace(contents, []byte(oldPath), []byte(newPath), -1)
+				utils.WriteFile(fullPath, newContents)
+				if err != nil {
+					log.Fatal("Failed to write file ", fullPath, ". ", err)
+				}
+			}
+		}
+	}
 }

@@ -78,13 +78,9 @@ func (manifest VersionManifest) FindVersion(semverRange string, stableOnly bool)
 }
 
 func (manifest VersionManifest) FindDownloadUrl(version string) string {
-	dlArch := runtime.GOARCH
-	if dlArch == "amd64" {
-		dlArch = "x64"
-	}
 	entry := manifest.FindEntry(version)
 	for _, file := range entry.Files {
-		if file.Arch == dlArch && file.Platform == "linux" {
+		if file.Arch == manifest.OSArch() && file.Platform == "linux" {
 			// If a PlatformVersion value is set, then the download is specific to a distro version.
 			// Since not all are, verify the distro only if PlatformVersion is actually set.
 			if file.PlatformVersion != "" {
@@ -98,6 +94,14 @@ func (manifest VersionManifest) FindDownloadUrl(version string) string {
 		}
 	}
 	return ""
+}
+
+func (manifest VersionManifest) OSArch() string {
+	dlArch := runtime.GOARCH
+	if dlArch == "amd64" {
+		dlArch = "x64"
+	}
+	return dlArch
 }
 
 func NewVersionManifest(manifestPath string) VersionManifest {

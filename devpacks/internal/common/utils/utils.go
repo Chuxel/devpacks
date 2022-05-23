@@ -356,7 +356,6 @@ func Untar(reader io.Reader, destination string, strip int) {
 			if !strings.HasPrefix(linkPath, destination) {
 				continue
 			}
-			log.Println("Typeflag:", header.Typeflag, "targetRelPath:", targetRelPath, "linkRelPath:", linkRelPath)
 		}
 
 		// Process contents
@@ -386,7 +385,6 @@ func Untar(reader io.Reader, destination string, strip int) {
 			}
 		}
 	}
-	return
 }
 
 func NewSemverRange(version string) semver.Range {
