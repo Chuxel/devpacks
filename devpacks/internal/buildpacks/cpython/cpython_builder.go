@@ -110,7 +110,7 @@ func (contrib CPythonLayerContributor) Contribute(layer libcnb.Layer) (libcnb.La
 
 		// Recursively fix hard coded paths in files. Several files have hard coded to expected Actions spot
 		log.Println("Fixing hardcoded paths...")
-		contrib.fixPathR(filepath.Join(layer.Path, "bin"), "#!/opt/hostedtoolcache/Python/"+version+"/"+manifest.OSArch(), layer.Path)
+		contrib.fixPathR(filepath.Join(layer.Path, "bin"), "#!/opt/hostedtoolcache/Python/"+version+"/"+manifest.OSArch(), "#!"+layer.Path)
 
 		// Add PYTHON_VERSION env var
 		layer.SharedEnvironment.Default("PYTHON_VERSION", version)
