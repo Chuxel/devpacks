@@ -68,6 +68,7 @@ func (contrib NpmInstallLayerContributor) Contribute(layer libcnb.Layer) (libcnb
 	layerNodeModules := filepath.Join(layer.Path, "node_modules")
 	if layer.Metadata["sha256"] != nil {
 		if currentHash == fmt.Sprint(layer.Metadata["sha256"]) {
+			log.Println("Reusing cached layer.")
 			// Reuse contents from cache by setting up a symlink
 			// The symlink created here will only apply to the build image and we need it in the launch image.
 			// So add a profile.d script that the launcher will fire to verify, but we need to add some paths

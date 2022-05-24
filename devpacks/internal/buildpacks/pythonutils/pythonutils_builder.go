@@ -61,7 +61,7 @@ func (contrib PythonUtilsLayerContributor) Name() string {
 
 // Implementation of libcnb.LayerContributor.Contribute
 func (contrib PythonUtilsLayerContributor) Contribute(layer libcnb.Layer) (libcnb.Layer, error) {
-\	var pkgList []string
+	var pkgList []string
 	if os.Getenv("BP_PYTHON_UTILS") != "" {
 		pkgList = strings.Split(os.Getenv("BP_PYTHON_UTILS"), " ")
 	} else {
@@ -92,7 +92,6 @@ func (contrib PythonUtilsLayerContributor) Contribute(layer libcnb.Layer) (libcn
 	if err := utils.WriteFile(path.Join(layer.Path, "devcontainer.json"), updatedBytes); err != nil {
 		log.Fatal("Failed to write devcontainer.json: ", err)
 	}
-	
 
 	// Use pip to install pipx in a temporary spot we'll remove later
 	pyTmp := filepath.Join(layer.Path, "tmp")

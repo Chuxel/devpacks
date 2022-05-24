@@ -1,0 +1,9 @@
+[[entries]]
+  name = "cpython"
+  [entries.metadata]
+    build = true
+    cache = true
+    launch = true
+
+[[entries]]
+  name = "pipinstall"

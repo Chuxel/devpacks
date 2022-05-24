@@ -40,7 +40,8 @@ func (detector NpmInstallDetector) DoDetect(context libcnb.DetectContext) (bool,
 
 	// This buildpack always requires nodejs
 	reqs := []libcnb.BuildPlanRequire{{Name: nodejs.BUILDPACK_NAME, Metadata: map[string]interface{}{
-		"build": true,
+		"build":  true,
+		"launch": true,
 	}}}
 
 	// Look for package json in the root
