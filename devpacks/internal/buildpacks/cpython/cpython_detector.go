@@ -38,7 +38,7 @@ func (detector CPythonDetector) DoDetect(context libcnb.DetectContext) (bool, []
 		return true, nil, nil, nil
 	}
 
-	// Look for requirements.txt in the root - TODO: Others?
+	// Look for requirements.txt in the root - TODO: Others? e.g. any .py file?
 	filesToCheck := []string{"requirements.txt"}
 	for _, file := range filesToCheck {
 		if _, err := os.Stat(filepath.Join(context.Application.Path, file)); err == nil {

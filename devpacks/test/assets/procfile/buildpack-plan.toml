@@ -1,0 +1,15 @@
+[[entries]]
+  name = "cpython"
+  [entries.metadata]
+    build = true
+    cache = true
+    launch = true
+
+[[entries]]
+  name = "pipinstall"
+
+[[entries]]
+  name = "procfile"
+
+[[entries]]
+  name = "devpack-finalize"

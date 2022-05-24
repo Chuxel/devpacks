@@ -8,6 +8,10 @@
   uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-npminstall"
 
 [[buildpacks]]
+  id = "${publisher}/${repository}/buildpack-npmbuild"
+  uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-npmbuild"
+
+[[buildpacks]]
   id = "${publisher}/${repository}/buildpack-npmstart"
   uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-npmstart"
 
@@ -19,6 +23,34 @@
   id = "${publisher}/${repository}/buildpack-pipinstall"
   uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-pipinstall"
 
+[[buildpacks]]
+  id = "${publisher}/${repository}/buildpack-procfile"
+  uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-procfile"
+
+[[order]]
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-nodejs"
+    optional=true
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-npminstall"
+    optional=true
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-npmbuild"
+    optional=true
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-cpython"
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-pipinstall"
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-procfile"
+
+
 [[order]]
 
     [[order.group]]
@@ -28,13 +60,41 @@
     id = "${publisher}/${repository}/buildpack-npminstall"
 
     [[order.group]]
+    id = "${publisher}/${repository}/buildpack-npmbuild"
+    optional=true
+
+    [[order.group]]
     id = "${publisher}/${repository}/buildpack-npmstart"
 
-    [[order.group]]
-    id = "${publisher}/${repository}/buildpack-cpython"
+[[order]]
 
     [[order.group]]
-    id = "${publisher}/${repository}/buildpack-pipinstall"
+    id = "${publisher}/${repository}/buildpack-nodejs"
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-npminstall"
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-npmbuild"
+    optional=true
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-npmstart"
+
+[[order]]
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-nodejs"
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-npminstall"
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-npmbuild"
+    optional=true
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-procfile"
 
 [stack]
 id = "io.buildpacks.stacks.bionic"
