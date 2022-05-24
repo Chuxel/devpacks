@@ -49,6 +49,7 @@ jobs:
       - name: Package and publish devpack images
         run: |
           cd devpacks
+          go mod download
           make buildpacks
           make publish-buildpacks
           cd ..
@@ -61,6 +62,7 @@ jobs:
       - name: Build extractor
         run: |
           cd devpacks
+          go mod download
           make build-extractor
           cd bin/devcontainer-extractor
           sha256sum \
