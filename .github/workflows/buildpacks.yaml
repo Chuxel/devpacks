@@ -27,7 +27,7 @@ jobs:
       - name: Setup pack and devcontainer CLI
         id: setup_pack_devcontainer_clis
         run: |
-          npm install -g @devcontainer/cli
+          npm install -g @devcontainers/cli
 
           pack_cli_version="0.26.0"
           target_path="$HOME/.local/bin"
