@@ -18,7 +18,7 @@ jobs:
       
       - uses: actions/setup-go@v2
         with:
-          go-version: '1.17.8'
+          go-version: '1.17.10'
 
       - uses: actions/setup-node@v2
         with:
@@ -27,6 +27,7 @@ jobs:
       - name: Setup pack and devcontainer CLI
         id: setup_pack_devcontainer_clis
         run: |
+          set -e
           npm install -g @devcontainers/cli
 
           pack_cli_version="0.26.0"
@@ -48,6 +49,7 @@ jobs:
 
       - name: Package and publish devpack images
         run: |
+          set -e
           cd devpacks
           go mod download
           make buildpacks
@@ -56,11 +58,13 @@ jobs:
           
       - name: Publish builders
         run: |
+          set -e
           builders/create-builders.sh empty true
           builders/create-builders.sh full true
 
       - name: Build extractor
         run: |
+          set -e
           cd devpacks
           go mod download
           make build-extractor
