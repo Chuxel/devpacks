@@ -1,0 +1,85 @@
+name: 'Devpacks release'
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, actions-test]
+    paths:
+      - 'devpacks/**'
+      - 'builders/**'
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release-devpacks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.17.8'
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+ 
+      - name: Setup pack and devcontainer CLI
+        id: setup_pack_devcontainer_clis
+        run: |
+          npm install -g @devcontainer/cli
+
+          pack_cli_version="0.26.0"
+          target_path="$HOME/.local/bin"
+
+          repo_url="https://github.com/buildpacks/pack"
+          filename="pack-v${pack_cli_version}-linux.tgz"
+          dl_url="${repo_url}/releases/download/v${pack_cli_version}/${filename}"
+          mkdir -p /tmp/pack-cli
+          curl -sSL "${dl_url}" > /tmp/pack-cli/${filename}
+          curl -sSL "${dl_url}.sha256" > /tmp/pack-cli/${filename}.sha256
+          cd /tmp/pack-cli
+          sha256sum --ignore-missing -c "${filename}.sha256"
+          mkdir -p "$target_path"
+          tar -f "${filename}" -C "${target_path}" --no-same-owner -xzv pack
+          rm -rf /tmp/pack-cli
+
+          export PATH="$PATH:$target_path"
+
+      - name: Package and publish devpack images
+        run: |
+          cd devpacks
+          make buildpacks
+          make publish-buildpacks
+          cd ..
+          
+      - name: Publish builders
+        run: |
+          builders/create-builders.sh empty true
+          builders/create-builders.sh full true
+
+      - name: Build extractor
+        run: |
+          cd devpacks
+          make build-extractor
+          cd bin/devcontainer-extractor
+          sha256sum \
+            ./devcontainer-extractor-linux-amd64 \
+            ./devcontainer-extractor-linux-arm64 \
+            ./devcontainer-extractor-darwin-amd64 \
+            ./devcontainer-extractor-darwin-arm64 \
+            ./devcontainer-extractor-windows-amd64.exe \
+            ./devcontainer-extractor-windows-arm64.exe \
+            > ./SHASUMS256.txt
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./devpacks/bin/devcontainer-extractor/devcontainer-extractor-linux-amd64
+            ./devpacks/bin/devcontainer-extractor/devcontainer-extractor-linux-arm64
+            ./devpacks/bin/devcontainer-extractor/devcontainer-extractor-darwin-amd64
+            ./devpacks/bin/devcontainer-extractor/devcontainer-extractor-darwin-arm64
+            ./devpacks/bin/devcontainer-extractor/devcontainer-extractor-windows-amd64.exe
+            ./devpacks/bin/devcontainer-extractor/devcontainer-extractor-windows-arm64.exe
+            ./devpacks/bin/devcontainer-extractor/SHASUMS256.txt

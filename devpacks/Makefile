@@ -6,11 +6,13 @@ buildpack-stages = build detect
 extractor-archs = amd64 arm64
 extractor-os = linux darwin windows
 
-all: build package
+all: buildpacks build-extractor
 
 build: build-buildpacks build-extractor
 
 package: package-buildpacks
+
+buildpacks: build-buildpacks package-buildpacks
 
 build-buildpacks:
 	for buildpack in $(buildpacks); do \
@@ -26,6 +28,10 @@ build-extractor:
 			GOARCH="$$arch" GOOS="$$os" go build -o ./bin/devcontainer-extractor/devcontainer-extractor-$$os-$$arch ./cmd/devcontainer-extractor/main.go; \
 		done; \
 	done
+	for arch in $(extractor-archs); do \
+		rm -f ./bin/devcontainer-extractor/devcontainer-extractor-windows-$$arch.exe; \
+		mv ./bin/devcontainer-extractor/devcontainer-extractor-windows-$$arch ./bin/devcontainer-extractor/devcontainer-extractor-windows-$$arch.exe; \
+	done; \
 
 package-buildpacks:
 	for buildpack in $(buildpacks); do \

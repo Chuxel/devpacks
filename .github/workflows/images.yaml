@@ -1,0 +1,23 @@
+name: 'Image release'
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, actions-test]
+    paths:
+      - 'images/**'
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release-features:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Publish images
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u "${{ github.actor }}" --password-stdin
+          images/build-stack-image.sh true
+          
+
