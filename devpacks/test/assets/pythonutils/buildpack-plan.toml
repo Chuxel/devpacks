@@ -1,0 +1,22 @@
+[[entries]]
+  name = "cpython"
+  [entries.metadata]
+    build = true
+    cache = true
+    launch = true
+
+[[entries]]
+  name = "pythonutils"
+  [entries.metadata]
+    build = false
+    cache = true
+    launch = false
+
+[[entries]]
+  name = "pythonutils"
+  [entries.metadata]
+    build = true
+    cache = false
+
+[[entries]]
+  name = "devpack-finalize"

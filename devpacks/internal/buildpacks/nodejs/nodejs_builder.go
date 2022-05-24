@@ -1,6 +1,7 @@
 package nodejs
 
 import (
+	"bytes"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -110,8 +111,9 @@ func (contrib NodeJsRuntimeLayerContributor) Contribute(layer libcnb.Layer) (lib
 	layer.Metadata = map[string]interface{}{
 		"node_version": nodeVersion,
 	}
-	// Write feature.json in all cases since its quick and we can avoid doing a checksum when caching
-	utils.WriteFile(path.Join(layer.Path, "devcontainer.json"), devcontainerJsonBytes)
+	// Write devcontainer.json in all cases since its quick and we can avoid doing a checksum when caching
+	updatedBytes := bytes.ReplaceAll(devcontainerJsonBytes, []byte("{{layerDir}}"), []byte(layer.Path))
+	utils.WriteFile(path.Join(layer.Path, "devcontainer.json"), updatedBytes)
 
 	return layer, nil
 }

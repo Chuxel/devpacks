@@ -114,7 +114,7 @@ func (contrib CPythonLayerContributor) Contribute(layer libcnb.Layer) (libcnb.La
 
 		// Add PYTHON_VERSION env var
 		layer.SharedEnvironment.Default("PYTHON_VERSION", version)
-		// Update lookup feature.json search path for finalize buildpack
+		// Update devcontainer.json search path for finalize buildpack to pull in properties
 		layer.BuildEnvironment.Append(devcontainer.FINALIZE_JSON_SEARCH_PATH_ENV_VAR_NAME, string(filepath.ListSeparator), layer.Path)
 	}
 

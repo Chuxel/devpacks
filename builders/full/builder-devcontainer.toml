@@ -8,6 +8,10 @@
   uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-cpython"
 
 [[buildpacks]]
+  id = "${publisher}/${repository}/buildpack-pythonutils"
+  uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-pythonutils"
+
+[[buildpacks]]
   id = "${publisher}/${repository}/buildpack-finalize"
   uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-finalize"
 
@@ -18,6 +22,9 @@
 
     [[order.group]]
     id = "${publisher}/${repository}/buildpack-cpython"
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-pythonutils"
 
     [[order.group]]
     id = "${publisher}/${repository}/buildpack-finalize"

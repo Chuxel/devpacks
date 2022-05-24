@@ -1,7 +1,7 @@
 registry = ghcr.io
 publisher = chuxel
 repository = devpacks
-buildpacks = nodejs finalize npminstall npmstart cpython
+buildpacks = nodejs finalize npminstall npmstart cpython pythonutils
 buildpack-stages = build detect
 
 all: build package

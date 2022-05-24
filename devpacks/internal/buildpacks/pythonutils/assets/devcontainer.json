@@ -1,0 +1,17 @@
+{
+    "customizations": {
+        "vscode": {
+			"settings": {
+				"python.formatting.autopep8Path": "{{layerDir}}/bin/autopep8",
+				"python.formatting.blackPath": "{{layerDir}}/bin/black",
+				"python.formatting.yapfPath": "{{layerDir}}/bin/yapf",
+				"python.linting.banditPath": "{{layerDir}}/bin/bandit",
+				"python.linting.flake8Path": "{{layerDir}}/bin/flake8",
+				"python.linting.mypyPath": "{{layerDir}}/bin/mypy",
+				"python.linting.pycodestylePath": "{{layerDir}}/bin/pycodestyle",
+				"python.linting.pydocstylePath": "{{layerDir}}/bin/pydocstyle",
+				"python.linting.pylintPath": "{{layerDir}}/bin/pylint"
+			}
+        }
+    }
+}
