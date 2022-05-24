@@ -58,14 +58,14 @@ jobs:
       - name: Publish builders
         run: |
           set -e
-          ${{ github.workspace }}/builders
+          cd ${{ github.workspace }}/builders
           ./create-builders.sh empty true
           ./create-builders.sh full true
 
       - name: Build extractor
         run: |
           set -e
-          ${{ github.workspace }}/devpacks
+          cd ${{ github.workspace }}/devpacks
           go mod download
           make build-extractor
           cd bin/devcontainer-extractor
