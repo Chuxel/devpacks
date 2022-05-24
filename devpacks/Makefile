@@ -3,6 +3,8 @@ publisher = chuxel
 repository = devpacks
 buildpacks = nodejs finalize npminstall npmbuild npmstart cpython pythonutils pipinstall procfile
 buildpack-stages = build detect
+extractor-archs = amd64 arm64
+extractor-os = linux darwin windows
 
 all: build package
 
@@ -19,9 +21,18 @@ build-buildpacks:
 	done
 
 build-extractor:
-	go build -o ./bin/devcontainer-extractor ./cmd/devcontainer-extractor/main.go
+	for os in $(extractor-os); do \
+		for arch in $(extractor-archs); do \
+			GOARCH="$$arch" GOOS="$$os" go build -o ./bin/devcontainer-extractor/devcontainer-extractor-$$os-$$arch ./cmd/devcontainer-extractor/main.go; \
+		done; \
+	done
 
 package-buildpacks:
 	for buildpack in $(buildpacks); do \
- 		pack buildpack package "$(registry)/$(publisher)/$(repository)/buildpack-$$buildpack" --pull-policy if-not-present -p ./bin/$$buildpack; \
- 	done
+		pack buildpack package "$(registry)/$(publisher)/$(repository)/buildpack-$$buildpack" --pull-policy if-not-present -p ./bin/$$buildpack; \
+	done
+
+publish-buildpacks:
+	for buildpack in $(buildpacks); do \
+		docker push "$(registry)/$(publisher)/$(repository)/buildpack-$$buildpack"; \
+	done
