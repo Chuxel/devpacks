@@ -50,22 +50,22 @@ jobs:
       - name: Package and publish devpack images
         run: |
           set -e
-          cd devpacks
+          cd ${{ github.workspace }}/devpacks
           go mod download
           make buildpacks
           make publish-buildpacks
-          cd ..
-          
+
       - name: Publish builders
         run: |
           set -e
-          builders/create-builders.sh empty true
-          builders/create-builders.sh full true
+          ${{ github.workspace }}/builders
+          ./create-builders.sh empty true
+          ./create-builders.sh full true
 
       - name: Build extractor
         run: |
           set -e
-          cd devpacks
+          ${{ github.workspace }}/devpacks
           go mod download
           make build-extractor
           cd bin/devcontainer-extractor
