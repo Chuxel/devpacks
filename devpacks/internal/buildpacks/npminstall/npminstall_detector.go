@@ -8,7 +8,6 @@ import (
 	"github.com/buildpacks/libcnb"
 	"github.com/chuxel/devpacks/internal/buildpacks/base"
 	"github.com/chuxel/devpacks/internal/buildpacks/nodejs"
-	"github.com/chuxel/devpacks/internal/common/devcontainer"
 )
 
 type NpmInstallDetector struct {
@@ -33,11 +32,6 @@ func (detector NpmInstallDetector) AlwaysPass() bool {
 }
 
 func (detector NpmInstallDetector) DoDetect(context libcnb.DetectContext) (bool, []libcnb.BuildPlanRequire, map[string]interface{}, error) {
-	if devcontainer.ContainerImageBuildMode() == "devcontainer" {
-		log.Println("Skipping. Detected devcontainer build mode.")
-		return false, nil, nil, nil
-	}
-
 	// This buildpack always requires nodejs
 	reqs := []libcnb.BuildPlanRequire{{Name: nodejs.BUILDPACK_NAME, Metadata: map[string]interface{}{
 		"build":  true,
@@ -45,8 +39,8 @@ func (detector NpmInstallDetector) DoDetect(context libcnb.DetectContext) (bool,
 	}}}
 
 	// Look for package json in the root
-	if _, err := os.Stat(path.Join(context.Application.Path, "package-lock.json")); err != nil {
-		log.Println("No package-lock.json found in ", context.Application.Path)
+	if _, err := os.Stat(path.Join(context.Application.Path, "package.json")); err != nil {
+		log.Println("No package.json found in ", context.Application.Path)
 		return false, reqs, nil, nil
 	}
 

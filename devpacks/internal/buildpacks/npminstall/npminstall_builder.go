@@ -1,18 +1,24 @@
 package npminstall
 
 import (
+	"bytes"
 	"crypto/sha256"
 	_ "embed"
 	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/buildpacks/libcnb"
 	"github.com/chuxel/devpacks/internal/buildpacks/base"
+	"github.com/chuxel/devpacks/internal/common/devcontainer"
 	"github.com/chuxel/devpacks/internal/common/utils"
 )
+
+//go:embed assets/devcontainer.json
+var devcontainerJsonBytes []byte
 
 //go:embed assets/check-symlink.sh
 var symlinkScript []byte
@@ -57,6 +63,27 @@ func (contrib NpmInstallLayerContributor) Name() string {
 
 // Implementation of libcnb.LayerContributor.Contribute
 func (contrib NpmInstallLayerContributor) Contribute(layer libcnb.Layer) (libcnb.Layer, error) {
+	// Just add a post create command in the devcontainer mode
+	if devcontainer.ContainerImageBuildMode() == "devcontainer" {
+		log.Println("Detected devcontainer build mode - adding devcontainer.json contents.")
+		if err := os.MkdirAll(layer.Path, 0755); err != nil {
+			log.Fatal("Unable to create layer folder. ", err)
+		}
+		updatedBytes := bytes.ReplaceAll(devcontainerJsonBytes, []byte("{{layerDir}}"), []byte(layer.Path))
+		if err := utils.WriteFile(path.Join(layer.Path, "devcontainer.json"), updatedBytes); err != nil {
+			log.Fatal("Unable to write devcontainer.json. ", err)
+		}
+		// Update devcontainer.json search path for finalize buildpack to pull in properties
+		layer.BuildEnvironment.Append(devcontainer.FINALIZE_JSON_SEARCH_PATH_ENV_VAR_NAME, string(filepath.ListSeparator), layer.Path)
+		layer.LayerTypes = libcnb.LayerTypes{
+			Build:  true,
+			Cache:  false,
+			Launch: false,
+		}
+		return layer, nil
+
+	}
+
 	// Determine sha256 of package-lock.json
 	packageLockBytes, err := os.ReadFile(filepath.Join(contrib.Context.Application.Path, "package-lock.json"))
 	if err != nil {
@@ -85,6 +112,9 @@ func (contrib NpmInstallLayerContributor) Contribute(layer libcnb.Layer) (libcnb
 			if err := os.RemoveAll(layerNodeModules); err != nil {
 				log.Fatal("Failed to remove ", layerNodeModules, ". ", err)
 			}
+			if err := os.MkdirAll(layer.Path, 0755); err != nil {
+				log.Fatal("Unable to create layer folder. ", err)
+			}
 		}
 	}
 
@@ -101,9 +131,6 @@ func (contrib NpmInstallLayerContributor) Contribute(layer libcnb.Layer) (libcnb
 
 	// Unfortunately, a "move" doesn't work  since we're across storage devices, so
 	// copy node_modules to layer for future reuse, but mark the layer for caching only
-	if err := os.MkdirAll(layer.Path, 0755); err != nil {
-		log.Fatal("Unable to create node_modules folder. ", err)
-	}
 	utils.CpR(appNodeModules, layer.Path)
 
 	// Only keep the layer around for caching purposes since the

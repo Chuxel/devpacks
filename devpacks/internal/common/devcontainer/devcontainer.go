@@ -2,6 +2,7 @@ package devcontainer
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -52,11 +53,37 @@ func (devContainer *DevContainer) Merge(inDevContainer DevContainer) {
 }
 
 func (devContainer *DevContainer) MergePropertyMap(inMap map[string]interface{}) {
+	// Special processing for lifecycle commands - append rather than replace
+	// TODO: Support array syntax... only string is supported for now
+	lifecyclePropNames := []string{"initializeCommand", "onCreateCommand", "updateContentCommand", "postCreateCommand", "postStartCommand", "postAttachCommand"}
+	mergedLifecycleProps := make(map[string]string)
+	for _, prop := range lifecyclePropNames {
+		val, hasKey := devContainer.Properties[prop]
+		inVal, inHasKey := inMap[prop]
+		if hasKey {
+			if inHasKey {
+				mergedLifecycleProps[prop] = fmt.Sprint(val) + "; " + fmt.Sprint(inVal)
+			} else {
+				mergedLifecycleProps[prop] = fmt.Sprint(val)
+			}
+		} else if inHasKey {
+			mergedLifecycleProps[prop] = fmt.Sprint(inVal)
+		}
+	}
+
+	// Handle other properties
 	result := utils.MergeProperties(devContainer.Properties, inMap)
+
+	// Update object with result
 	devContainer.Properties = make(map[string]interface{})
 	itr := reflect.ValueOf(result).MapRange()
 	for itr.Next() {
-		devContainer.Properties[itr.Key().String()] = itr.Value().Interface()
+		key := itr.Key().String()
+		if utils.SliceContainsString(lifecyclePropNames, key) {
+			devContainer.Properties[key] = reflect.ValueOf(mergedLifecycleProps[key]).Interface()
+		} else {
+			devContainer.Properties[key] = itr.Value().Interface()
+		}
 	}
 }
 

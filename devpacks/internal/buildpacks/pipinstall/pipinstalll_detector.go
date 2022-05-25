@@ -8,7 +8,6 @@ import (
 	"github.com/buildpacks/libcnb"
 	"github.com/chuxel/devpacks/internal/buildpacks/base"
 	"github.com/chuxel/devpacks/internal/buildpacks/cpython"
-	"github.com/chuxel/devpacks/internal/common/devcontainer"
 )
 
 type PipInstallDetector struct {
@@ -33,11 +32,6 @@ func (detector PipInstallDetector) AlwaysPass() bool {
 }
 
 func (detector PipInstallDetector) DoDetect(context libcnb.DetectContext) (bool, []libcnb.BuildPlanRequire, map[string]interface{}, error) {
-	if devcontainer.ContainerImageBuildMode() == "devcontainer" {
-		log.Println("Skipping. Detected devcontainer build mode.")
-		return false, nil, nil, nil
-	}
-
 	// This buildpack always requires cpython
 	reqs := []libcnb.BuildPlanRequire{{Name: cpython.BUILDPACK_NAME, Metadata: map[string]interface{}{
 		"build":  true,

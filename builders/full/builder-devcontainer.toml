@@ -4,8 +4,16 @@
   uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-nodejs"
 
 [[buildpacks]]
+  id = "${publisher}/${repository}/buildpack-npminstall"
+  uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-npminstall"
+
+[[buildpacks]]
   id = "${publisher}/${repository}/buildpack-cpython"
   uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-cpython"
+
+[[buildpacks]]
+  id = "${publisher}/${repository}/buildpack-pipinstall"
+  uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-pipinstall"
 
 [[buildpacks]]
   id = "${publisher}/${repository}/buildpack-pythonutils"
@@ -21,7 +29,15 @@
     id = "${publisher}/${repository}/buildpack-nodejs"
 
     [[order.group]]
+    id = "${publisher}/${repository}/buildpack-npminstall"
+    optional=true
+
+    [[order.group]]
     id = "${publisher}/${repository}/buildpack-cpython"
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-pipinstall"
+    optional=true
 
     [[order.group]]
     id = "${publisher}/${repository}/buildpack-pythonutils"

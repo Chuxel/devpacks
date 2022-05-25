@@ -1,18 +1,24 @@
 package pipinstall
 
 import (
+	"bytes"
 	"crypto/sha256"
 	_ "embed"
 	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/buildpacks/libcnb"
 	"github.com/chuxel/devpacks/internal/buildpacks/base"
+	"github.com/chuxel/devpacks/internal/common/devcontainer"
 	"github.com/chuxel/devpacks/internal/common/utils"
 )
+
+//go:embed assets/devcontainer.json
+var devcontainerJsonBytes []byte
 
 type PipInstallBuilder struct {
 	// Implements base.DefaultBuilder
@@ -54,6 +60,26 @@ func (contrib PipInstallLayerContributor) Name() string {
 
 // Implementation of libcnb.LayerContributor.Contribute
 func (contrib PipInstallLayerContributor) Contribute(layer libcnb.Layer) (libcnb.Layer, error) {
+	// Just add a post create command in the devcontainer mode
+	if devcontainer.ContainerImageBuildMode() == "devcontainer" {
+		log.Println("Detected devcontainer build mode - adding devcontainer.json contents.")
+		if err := os.MkdirAll(layer.Path, 0755); err != nil {
+			log.Fatal("Unable to create layer folder. ", err)
+		}
+		updatedBytes := bytes.ReplaceAll(devcontainerJsonBytes, []byte("{{layerDir}}"), []byte(layer.Path))
+		if err := utils.WriteFile(path.Join(layer.Path, "devcontainer.json"), updatedBytes); err != nil {
+			log.Fatal("Unable to write devcontainer.json. ", err)
+		}
+		// Update devcontainer.json search path for finalize buildpack to pull in properties
+		layer.BuildEnvironment.Append(devcontainer.FINALIZE_JSON_SEARCH_PATH_ENV_VAR_NAME, string(filepath.ListSeparator), layer.Path)
+		layer.LayerTypes = libcnb.LayerTypes{
+			Build:  true,
+			Cache:  false,
+			Launch: false,
+		}
+		return layer, nil
+	}
+
 	// Determine sha256 of requirements.txt
 	requirementsTxtBytes, err := os.ReadFile(filepath.Join(contrib.Context.Application.Path, "requirements.txt"))
 	if err != nil {

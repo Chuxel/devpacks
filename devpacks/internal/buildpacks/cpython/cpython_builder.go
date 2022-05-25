@@ -125,7 +125,9 @@ func (contrib CPythonLayerContributor) Contribute(layer libcnb.Layer) (libcnb.La
 	}
 	// Write devcontainer.json in all cases since its quick and we can avoid doing a checksum when caching
 	updatedBytes := bytes.ReplaceAll(devcontainerJsonBytes, []byte("{{layerDir}}"), []byte(layer.Path))
-	utils.WriteFile(path.Join(layer.Path, "devcontainer.json"), updatedBytes)
+	if err := utils.WriteFile(path.Join(layer.Path, "devcontainer.json"), updatedBytes); err != nil {
+		log.Fatal("Unable to write devcontainer.json. ", err)
+	}
 
 	return layer, nil
 }

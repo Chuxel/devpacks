@@ -4,5 +4,6 @@
             "extensions": ["foo.foo"]
         }
     },
-    "runArgs": ["--privileged"]
+    "runArgs": ["--privileged"],
+    "postCreateCommand": "echo hello"
 }

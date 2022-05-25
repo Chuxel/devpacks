@@ -16,13 +16,14 @@ This repo demonstrates the value of https://github.com/devcontainers/spec/issues
 3. Two builders that include (1) and (2) under `builders`
 4. A utility to generate a `devcontainer.json` file from the output of one of the builders
 
-The `ghcr.io/chuxel/devpacks/builder-prod-full` builder behaves like a typical buildpack, while `ghcr.io/chuxel/devpacks/builder-devcontainer-full` instead focuses on a dev container image that is similar to production. 
+The `ghcr.io/chuxel/devpacks/builder-prod-full` builder behaves like a typical buildpack, while `ghcr.io/chuxel/devpacks/builder-devcontainer-full` instead focuses on a dev container image that is similar to production.
 
 These builders can be used with the [`pack` CLI](https://buildpacks.io/docs/tools/pack/) or other buildpacks v3 compliant tools. 
 
-An extractor utility (see [releases](https://github.com/Chuxel/devpacks/releases)) can then be used to generate a `devcontainer.json` or merge a file from the output of the `builder-devcontainer-full` builder. It will also add a reference to the specified image if no Dockerfile or Docker Compose file is referenced in the local `devcontainer.json` (and otherwise assumes you've referenced the right image in these files). This allows developers to add additional metadata and settings to the devcontainer.json file not supported by the buildpack (including dev container features).
+An extractor utility (see [releases](https://github.com/Chuxel/devpacks/releases)) can then be used to generate a `devcontainer.json` or merge a file from the output of the `builder-devcontainer-full` builder. This includes supporting buildpacks like `npminstall` that add a `postCreateCommand` when operating in the devcontainer builder (while doing the actual npm install in the production builder). It will also add a reference to the specified image if no Dockerfile or Docker Compose file is referenced in the local `devcontainer.json` (and otherwise assumes you've referenced the right image in these files). This allows developers to add additional metadata and settings to the devcontainer.json file not supported by the buildpack (including dev container features).
 
 Right now it supports basic Node.js apps with a `start` entry in `package.json`, and basic Python applications that use `pip` (and thus have a `requirements.txt` file) and include a [`Procfile`](https://devcenter.heroku.com/articles/procfile) with a `web` entry to specify the startup command.
+
 
 ## How it works
 
