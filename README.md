@@ -62,6 +62,8 @@ The Buildpacks are written in Go and take advantage of [libcnb](https://pkg.go.d
 
 That's the scoop!
 
-## Problems not solved
+## Notes and problems not solved
 
 1. Buildpacks cannot install anything that requires root access or modify contents outside of the specified layer folder (which isn't a Docker layer in and of itself). There's a [proposal](https://github.com/buildpacks/spec/pull/307) that could enable it.
+
+2. Given the way [Paketo buildpacks are set up](https://github.com/paketo-buildpacks/rfcs/blob/main/text/python/0001-restructure.md), it would technically be possible to reuse their cpython or nodejs buildpacks. To do so for Python, the pythonutils buildpack in this repository would need to be modified to add all needed devcontainer.json contents, and then add a requirement specifying `build=true` and `launch=true` in the metadata. Other Paketo buildpacks could also be used in a similar way. 
