@@ -1,0 +1,47 @@
+name: 'Devpacks release'
+on:
+  workflow_dispatch:
+  push:
+    tags:
+    - 'extractor-v*'
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release-devpacks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.17.10'
+
+      - name: Build extractor
+        run: |
+          set -e
+          cd ${{ github.workspace }}/devpacks
+          go mod download
+          make build-extractor
+          cd bin/devcontainer-extractor
+          sha256sum \
+            ./devcontainer-extractor-linux-amd64 \
+            ./devcontainer-extractor-linux-arm64 \
+            ./devcontainer-extractor-darwin-amd64 \
+            ./devcontainer-extractor-darwin-arm64 \
+            ./devcontainer-extractor-windows-amd64.exe \
+            ./devcontainer-extractor-windows-arm64.exe \
+            > ./SHASUMS256.txt
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./devpacks/bin/devcontainer-extractor/devcontainer-extractor-linux-amd64
+            ./devpacks/bin/devcontainer-extractor/devcontainer-extractor-linux-arm64
+            ./devpacks/bin/devcontainer-extractor/devcontainer-extractor-darwin-amd64
+            ./devpacks/bin/devcontainer-extractor/devcontainer-extractor-darwin-arm64
+            ./devpacks/bin/devcontainer-extractor/devcontainer-extractor-windows-amd64.exe
+            ./devpacks/bin/devcontainer-extractor/devcontainer-extractor-windows-arm64.exe
+            ./devpacks/bin/devcontainer-extractor/SHASUMS256.txt

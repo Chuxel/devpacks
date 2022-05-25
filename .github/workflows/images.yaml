@@ -2,9 +2,8 @@ name: 'Image release'
 on:
   workflow_dispatch:
   push:
-    branches: [main, actions-test]
-    paths:
-      - 'images/**'
+    tags:
+    - 'images-v*'
 permissions:
   contents: write
   packages: write
@@ -21,4 +20,5 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u "${{ github.actor }}" --password-stdin ghcr.io
           ./build-stack-image.sh true
           
-
+      - name: Release
+        uses: softprops/action-gh-release@v1
