@@ -1,4 +1,4 @@
-name: 'Devpacks release'
+name: 'Extractor release'
 on:
   workflow_dispatch:
   push:
