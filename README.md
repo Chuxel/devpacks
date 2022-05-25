@@ -11,10 +11,10 @@
 
 This repo demonstrates the value of https://github.com/devcontainers/spec/issues/18 (and https://github.com/devcontainers/spec/issues/2) by integrating a development container metadata into [Cloud Native Buildpacks](https://buildpacks.io/). Repo contents:
 
-1. A set of buildpacks under `devpacks`
-2. A set of stack images under `images`
-3. Two builders that include (1) and (2) under `builders`
-4. A utility to generate a `devcontainer.json` file from the output of one of the builders
+1. A set of buildpacks under `devpacks` (with core logic being in `devpacks/internal/buildpacks`)
+2. A set of [stack images](https://buildpacks.io/docs/operator-guide/create-a-stack/) generated via a `Dockerfile` under `images`
+3. Two [builders](https://buildpacks.io/docs/operator-guide/create-a-builder/) that include (1) and (2) under `builders`
+4. A utility to generate a `devcontainer.json` file from the output of one of the builders (`devpacks/cmd/devcontainer-extractor`)
 
 The `ghcr.io/chuxel/devpacks/builder-prod-full` builder behaves like a typical buildpack, while `ghcr.io/chuxel/devpacks/builder-devcontainer-full` instead focuses on a dev container image that is similar to production.
 
@@ -36,5 +36,6 @@ Buildpacks are written in Go and take advantage of libcnb to simplify interop wi
 4. A `finalize` buildpack merges all devcontainer.json snippets from the `FINALIZE_JSON_SEARCH_PATH` and adds a `dev.containers.json` label on the image with their contents.
 5. The `finalize` buildpack also removes the source code since this is expected to be mounted as a volume or bind mounted when the image is used. As a result, `finalize` will fail detection in production mode and is the last in order in the devcontainer builder.
 7. Since the dev container CLI (and related products like VS Code Remote - Containers and Codespaces) does not support dev container metadata in an image label, an extractor utility (see `devpacks/cmd/devcontainer-extractor`) extracts metadata from the image and merges it with a local devcontainer.json file if one is found (creating `devcontainer.json.merged`). It also translates properties proposed in https://github.com/devcontainers/spec/issues/2 to `runArgs` equivalents.
+8. Finally, the devcontainer base images include code to handle the fact that any Buildpack injected environment variables are not available to "docker exec" (or other CLI) initiated processes since these do not execute from the entrypoint. It instead adds a line in several rc/profile files to detect the scenario and replace the process with a new one that was initiated via the launcher (see `images/scripts/launcher-hack.sh`). This is **critical** to ensuring things work in the dev container context.
 
 That's the scoop!
