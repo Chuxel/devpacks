@@ -3,6 +3,7 @@ package finalize
 import (
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -36,6 +37,16 @@ func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildR
 		devContainer := devcontainer.NewDevContainer(loc)
 		mergedDevContainerJson.Merge(devContainer)
 	}
+	// Force userEnvProbe to something other than "none" - needed so env vars are picked up
+	userEnvProbe := "loginInteractiveShell"
+	existingEnvProbeIntr, hasKey := mergedDevContainerJson.Properties["userEnvProbe"]
+	if hasKey {
+		existingEnvProbe := fmt.Sprint(existingEnvProbeIntr)
+		if existingEnvProbe != "none" {
+			userEnvProbe = existingEnvProbe
+		}
+	}
+	mergedDevContainerJson.Properties["userEnvProbe"] = userEnvProbe
 
 	// Add the result to the label
 	log.Println("Applying merged json content to label ", devcontainer.DEVCONTAINER_JSON_LABEL_NAME)
@@ -53,10 +64,11 @@ func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildR
 	// Set the default process to bash
 	log.Println("Overriding default launch process...")
 	result.Processes = append(result.Processes, libcnb.Process{
-		Type:    "devcontainer",
-		Command: "/cnb/lifecycle/launcher",
-		Default: true,
-		Direct:  true,
+		Type:      "devcontainer",
+		Command:   "/bin/bash",
+		Arguments: []string{"-c", "echo 'Dev container now started and waiting for connection.' && while true; do sleep 100; done"},
+		Default:   true,
+		Direct:    true,
 	})
 
 	// Clear out workspace folder since we'll bind mount these contents

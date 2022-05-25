@@ -80,7 +80,7 @@ func (devContainer *DevContainer) MergePropertyMap(inMap map[string]interface{})
 	for itr.Next() {
 		key := itr.Key().String()
 		if utils.SliceContainsString(lifecyclePropNames, key) {
-			devContainer.Properties[key] = reflect.ValueOf(mergedLifecycleProps[key]).Interface()
+			devContainer.Properties[key] = mergedLifecycleProps[key]
 		} else {
 			devContainer.Properties[key] = itr.Value().Interface()
 		}
