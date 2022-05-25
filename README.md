@@ -9,25 +9,34 @@
 
 ## What is here
 
-This repo demonstrates the value of https://github.com/devcontainers/spec/issues/18 (and https://github.com/devcontainers/spec/issues/2) by integrating a development container metadata into [Cloud Native Buildpacks](https://buildpacks.io/). Repo contents:
+This repo demonstrates the value of https://github.com/devcontainers/spec/issues/18 (and https://github.com/devcontainers/spec/issues/2) by integrating development container metadata into [Cloud Native Buildpacks](https://buildpacks.io/). 
+
+Repo contents:
 
 1. A set of buildpacks under `devpacks` (with core logic being in `devpacks/internal/buildpacks`)
 2. A set of [stack images](https://buildpacks.io/docs/operator-guide/create-a-stack/) generated via a `Dockerfile` under `images`
 3. Two [builders](https://buildpacks.io/docs/operator-guide/create-a-builder/) that include (1) and (2) under `builders`
 4. A utility to generate a `devcontainer.json` file from the output of one of the builders (`devpacks/cmd/devcontainer-extractor`)
 
-The `ghcr.io/chuxel/devpacks/builder-prod-full` builder behaves like a typical buildpack, while `ghcr.io/chuxel/devpacks/builder-devcontainer-full` instead focuses on a dev container image that is similar to production.
+The `ghcr.io/chuxel/devpacks/builder-prod-full` builder behaves like a typical buildpack, while `ghcr.io/chuxel/devpacks/builder-devcontainer-full` instead focuses on creating a dev container image that is similar to production.
 
-These builders can be used with the [`pack` CLI](https://buildpacks.io/docs/tools/pack/) or other buildpacks v3 compliant tools. 
+These builders can be used with the [`pack` CLI](https://buildpacks.io/docs/tools/pack/) or other CNB v3 compliant tools. 
 
-An extractor utility (see [releases](https://github.com/Chuxel/devpacks/releases)) can then be used to generate a `devcontainer.json` or merge a file from the output of the `builder-devcontainer-full` builder. This includes supporting buildpacks like `npminstall` that add a `postCreateCommand` when operating in the devcontainer builder (while doing the actual npm install in the production builder). It will also add a reference to the specified image if no Dockerfile or Docker Compose file is referenced in the local `devcontainer.json` (and otherwise assumes you've referenced the right image in these files). This allows developers to add additional metadata and settings to the devcontainer.json file not supported by the buildpack (including dev container features).
+An extractor utility (see [releases](https://github.com/Chuxel/devpacks/releases)) can then be used to generate `devcontainer.json` or (merge contents with an existing file) for images output by the `builder-devcontainer-full` builder. The resulting devcontainer.json will contain any needed tooling or runtime metadata - including relevant lifecycle script properties like `postCreateCommand` (e.g. `npm install`). It will also add a reference to the specified image to the json file as long as no Dockerfile or Docker Compose file is referenced - as long as no existing Dockerfile or Docker Compose file is referenced in the local `devcontainer.json` file. This allows developers to add additional metadata and settings to the devcontainer.json file not supported by the buildpack (including dev container features).
 
 Right now it supports basic Node.js apps with a `start` entry in `package.json`, and basic Python applications that use `pip` (and thus have a `requirements.txt` file) and include a [`Procfile`](https://devcenter.heroku.com/articles/procfile) with a `web` entry to specify the startup command.
 
+e.g. This:
+```
+$ pack build devcontainer_image --trust-builder --builder ghcr.io/chuxel/devpacks/builder-devcontainer-full
+$ devcontainer-extractor devcontainer_image
+```
+
+Will create an image called `devcontainer_image` using the based on the the current folder and a `devcontainer.json.merged` file with the related devcontainer.json contents.
 
 ## How it works
 
-Buildpacks are written in Go and take advantage of libcnb to simplify interop with the buildpack spec.
+Buildpacks are written in Go and take advantage of [libcnb](https://pkg.go.dev/github.com/buildpacks/libcnb) to simplify interop with the buildpack spec.
 
 1. The base images for the `prod` and `devcontainer` builders are constructed using a multi-stage Dockerfile with later dev container stages adding more base content, but otherwise the same structure - which ensures consistency.
 2. A "build mode" allows for dual-purpose buildpacks that can either alter behaviors or simply not be detected when in one mode or the other. For example, a `pythonutils` buildpack that injects tools like `pylint` only executes in devcontainer mode, while others like `nodejs` or `cpython` execute in both modes. A file in the build image can be used determine the mode, but they also support passing in the mode as a `BP_DCNB_BUILD_MODE` environment variable.
