@@ -17,8 +17,8 @@ jobs:
       
       - name: Publish images
         run: |
-          ${{ github.workspace }}/images
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u "${{ github.actor }}" --password-stdin
+          cd ${{ github.workspace }}/images
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u "${{ github.actor }}" --password-stdin ghcr.io
           ./build-stack-image.sh true
           
 

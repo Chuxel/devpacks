@@ -47,6 +47,12 @@ jobs:
 
           export PATH="$PATH:$target_path"
 
+      - name: Docker login
+        id: docker_login
+        run: |
+          set -e
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u "${{ github.actor }}" --password-stdin ghcr.io
+ 
       - name: Package and publish devpack images
         run: |
           set -e
