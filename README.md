@@ -32,7 +32,7 @@ $ pack build devcontainer_image --trust-builder --builder ghcr.io/chuxel/devpack
 $ devcontainer-extractor devcontainer_image
 ```
 
-Will create an image called `devcontainer_image` using the based on the the current folder and a `devcontainer.json.merged` file with the related devcontainer.json contents.
+Will create an image called `devcontainer_image` and a and output a related `devcontainer.json.merged` file using the based on the contents of the current folder.
 
 ## How it works
 
