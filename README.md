@@ -48,8 +48,8 @@ Each buildpack in this repository demos something slightly different.
     - `npminstall` - Demos a dual-mode buildpack that executes `npm install` in prod mode, but adds a `postCreateCommand` instead in devcontainer mode. Also "requires" `nodejs`.
     - `npmbuild` - Demos an optional, prod-only buildpack.
     - `npmstart` - Demos adding a prod-only launch config.
-- `cpython` - Demos installing cpython using [GitHub Action's python-versions build](https://github.com/actions/python-versions), consumes `version-manifest.json` file to do it. (Model should extend to other "versions" repositories. ) Also can add devcontainer.json metadata.
-    - `pipinstall` - Another dual-mode buildpack like `npminstall`.
+- `cpython` - Demos installing cpython using [GitHub Action's python-versions builds](https://github.com/actions/python-versions) and parsing its `versions-manifest.json` file to find the right download. (This model should extend to other Actions "versions" repositories. ) Also add devcontainer.json metadata.
+    - `pipinstall` - Another dual-mode buildpack like `npminstall`, but for pip3.
     - `pythonutils` - Demonstrates a devcontainer mode only step to install tools like `pylint` that you would not want in prod mode.
 - `goutils` - Demonstrates a devcontainer mode only buildpack that can depend on a [completely external Paketo buildpack](https://github.com/paketo-buildpacks/go-dist) to acquire Go itself, then install tools needed for developing. This buildpack also adds all needed devcontainer.json metadata for go development including setting the ptrace capability for debugging. The [full Go Paketo buildpack set](https://github.com/paketo-buildpacks/go) is then used in the prod builder.
 - `procfile` - Demos creating a launch command while in production mode from a [`Procfile`](https://devcenter.heroku.com/articles/procfile).
