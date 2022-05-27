@@ -24,7 +24,7 @@ These builders can be used with the [`pack` CLI](https://buildpacks.io/docs/tool
 
 An extractor utility (see [releases](https://github.com/Chuxel/devpacks/releases)) can then be used to generate `devcontainer.json` or (merge contents with an existing file) for images output by the `builder-devcontainer-full` builder. The resulting devcontainer.json will contain any needed tooling or runtime metadata - including relevant lifecycle script properties like `postCreateCommand` (e.g. `npm install`). It will also add a reference to the specified image to the json file as long as no Dockerfile or Docker Compose file is referenced - as long as no existing Dockerfile or Docker Compose file is referenced in the local `devcontainer.json` file. This allows developers to add additional metadata and settings to the devcontainer.json file not supported by the buildpack (including dev container features).
 
-Right now it supports basic Node.js apps with a `start` script in `package.json`, and basic Python 3 applications that use `pip` (and thus have a `requirements.txt` file) and include a [`Procfile`](https://devcenter.heroku.com/articles/procfile) with a `web` entry to specify the startup command.
+Right now it supports basic Node.js apps with a `start` script in `package.json`, basic Python 3 applications that use `pip` (and thus have a `requirements.txt` file), building Go apps/services. The Go and Python apps need to include a [`Procfile`](https://devcenter.heroku.com/articles/procfile) with a `web` entry to specify the startup command.
 
 ### Usage
 This:
