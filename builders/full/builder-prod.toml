@@ -24,6 +24,10 @@
   uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-pipinstall"
 
 [[buildpacks]]
+  id = "paketo-buildpacks/go"
+  uri = "docker://gcr.io/paketo-buildpacks/go:1.4.0"
+
+[[buildpacks]]
   id = "${publisher}/${repository}/buildpack-procfile"
   uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-procfile"
 
@@ -95,6 +99,27 @@
 
     [[order.group]]
     id = "${publisher}/${repository}/buildpack-procfile"
+
+[[order]]
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-nodejs"
+    optional=true
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-npminstall"
+    optional=true
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-npmbuild"
+    optional=true
+
+    [[order.group]]
+    id = "paketo-buildpacks/go"
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-procfile"
+
 
 [stack]
 id = "io.buildpacks.stacks.bionic"

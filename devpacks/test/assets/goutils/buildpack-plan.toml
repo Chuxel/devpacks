@@ -1,0 +1,12 @@
+[[entries]]
+  name = "go"
+  [entries.metadata]
+    build = true
+    cache = true
+    launch = true
+
+[[entries]]
+  name = "goutils"
+
+[[entries]]
+  name = "devpack-finalize"

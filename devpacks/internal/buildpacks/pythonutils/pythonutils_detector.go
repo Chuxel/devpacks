@@ -31,7 +31,7 @@ func (detector PythonUtilsDetector) Name() string {
 }
 
 func (detector PythonUtilsDetector) AlwaysPass() bool {
-	return true
+	return false
 }
 
 func (detector PythonUtilsDetector) DoDetect(context libcnb.DetectContext) (bool, []libcnb.BuildPlanRequire, map[string]interface{}, error) {

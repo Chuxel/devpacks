@@ -20,8 +20,19 @@
   uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-pythonutils"
 
 [[buildpacks]]
+  id = "paketo-buildpacks/go-dist"
+  uri = "docker://gcr.io/paketo-buildpacks/go-dist:1.2.0"
+
+[[buildpacks]]
+  id = "${publisher}/${repository}/buildpack-goutils"
+  uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-goutils"
+
+[[buildpacks]]
   id = "${publisher}/${repository}/buildpack-finalize"
   uri = "docker://ghcr.io/${publisher}/${repository}/buildpack-finalize"
+
+
+
 
 [[order]]
 
@@ -41,6 +52,12 @@
 
     [[order.group]]
     id = "${publisher}/${repository}/buildpack-pythonutils"
+
+    [[order.group]]
+    id = "paketo-buildpacks/go-dist"
+
+    [[order.group]]
+    id = "${publisher}/${repository}/buildpack-goutils"
 
     [[order.group]]
     id = "${publisher}/${repository}/buildpack-finalize"

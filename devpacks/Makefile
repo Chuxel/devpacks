@@ -1,7 +1,7 @@
 registry = ghcr.io
 publisher = chuxel
 repository = devpacks
-buildpacks = nodejs finalize npminstall npmbuild npmstart cpython pythonutils pipinstall procfile
+buildpacks = nodejs finalize npminstall npmbuild npmstart cpython pythonutils pipinstall goutils procfile
 buildpack-stages = build detect
 extractor-archs = amd64 arm64
 extractor-os = linux darwin windows

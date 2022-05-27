@@ -40,6 +40,21 @@ $ pack build devcontainer_image --trust-builder --builder ghcr.io/chuxel/devpack
 ```
 ... will generate a production version of the image with the application inside it instead.
 
+### Buildpack information
+
+Each buildpack in this repository demos something slightly different.
+
+- `nodejs` - Demos installing Node.js, supporting different layering requirements, and adding devcontainer.json metadata.
+    - `npminstall` - Demos a dual-mode buildpack that executes `npm install` in prod mode, but adds a `postCreateCommand` instead in devcontainer mode. Also "requires" `nodejs`.
+    - `npmbuild` - Demos an optional, prod-only buildpack.
+    - `npmstart` - Demos adding a prod-only launch config.
+- `cpython` - Demos installing cpython using [GitHub Action's python-versions build](https://github.com/actions/python-versions), consumes `version-manifest.json` file to do it. (Model should extend to other "versions" repositories. ) Also can add devcontainer.json metadata.
+    - `pipinstall` - Another dual-mode buildpack like `npminstall`.
+    - `pythonutils` - Demonstrates a devcontainer mode only step to install tools like `pylint` that you would not want in prod mode.
+- `goutils` - Demonstrates a devcontainer mode only buildpack that can depend on a [completely external Paketo buildpack](https://github.com/paketo-buildpacks/go-dist) to acquire Go itself, then install tools needed for developing. This buildpack also adds all needed devcontainer.json metadata for go development including setting the ptrace capability for debugging. The [full Go Paketo buildpack set](https://github.com/paketo-buildpacks/go) is then used in the prod builder.
+- `procfile` - Demos creating a launch command while in production mode from a [`Procfile`](https://devcenter.heroku.com/articles/procfile).
+- `finalize` - Demonstrates processing of accumulating devcontainer.json metadata from multiple buildpacks, placing it in a label, cleaning out the source tree, and adding a launch command that prevents the container from terminating by default.
+
 ## How it works
 
 The Buildpacks are written in Go and take advantage of [libcnb](https://pkg.go.dev/github.com/buildpacks/libcnb) to simplify interop with the buildpack spec. Here's how the different pieces in this repository work together:
@@ -48,7 +63,9 @@ The Buildpacks are written in Go and take advantage of [libcnb](https://pkg.go.d
 
 2. The devcontainer base images include also include updates to rc/profile files to handle the fact that any Buildpack injected environment variables are not available to "docker exec" (or other CLI). Only the sub-processes of the entrypoint get the environmant variables buildpacks add by default, and interacting with the dev container is typically done using commands like exec. See [launcher-hack.sh](images/scripts/launcher-hack.sh) for details. This is **critical** to ensuring things work in the dev container context. Here again, this is in the image since buildpacks cannot modify contents outside of their specific layer folders either.
 
-3. A "build mode" allows for dual-purpose buildpacks that can either alter behaviors or simply not be detected when in one mode or the other. For example, a `pythonutils` buildpack that injects tools like `pylint` only executes in devcontainer mode, while others like `nodejs` or `cpython` execute in both modes. A file placed in a known location in the Dockerfile from step 1 indicates the mode for the build - though you can also set this mode using the `BP_DCNB_BUILD_MODE` environment variable.
+1. A "build mode" allows for dual-purpose buildpacks that can either alter behaviors or simply not be detected when in one mode or the other. For example, a `pythonutils` buildpack that injects tools like `pylint` only executes in devcontainer mode, while others like `nodejs` or `cpython` execute in both modes. A file placed in a known location in the Dockerfile from step 1 indicates the mode for the build - though you can also set this mode using the `BP_DCNB_BUILD_MODE` environment variable.
+
+2. Base buildpacks like `nodejs` and `python` are set up so that downstream buildpacks like `npminstall` and `pythoninstall` can add requirements that affect whether they are available in the build image, launch image (resulting output) or both through metadata. Setting `build=true` causes the `nodejs` or `python` to place the contents in the build image while `launch=true` causes it to be in the launch image. The union of all requirements is considered for the final result. As a result, these two buildpacks are set up to always "pass" detection, and instead only "provide" the capability for others to require in the event of a failed detection. Where this dynamic behavior is important for this use case is this enables a downstream buildpack to say something should be in the launch image, but not in the build image in one specific mode without having to alter the original. ([Paketo buildpacks use a similar trick](https://github.com/paketo-buildpacks/cpython#integration) so that runtimes can be used for tools in the build image even if they aren't in the output - but have the same benefits. See the `goutils` buildpack for a reuse example.)
 
 4. The buildpacks can optionally place a `devcontainer.json` snippet file in their layers and add the path to it in a common `FINALIZE_JSON_SEARCH_PATH` build-time environment variable for the layer. These devcontainer.json files can include tooling settings, runtime settings like adding capabilities (e.g. ptrace or privileged), or even lifecycle commands.
 
@@ -64,6 +81,8 @@ That's the scoop!
 
 ## Notes and problems not solved
 
-1. Buildpacks cannot install anything that requires root access or modify contents outside of the specified layer folder (which isn't a Docker layer in and of itself). There's a [proposal](https://github.com/buildpacks/spec/pull/307) that could enable it.
+1. Buildpacks cannot install anything that requires root access or modify contents outside of the specified layer folder (which isn't a Docker layer in and of itself). There's a [image extension/Dockerfile proposal](https://github.com/buildpacks/spec/pull/307) that could enable it.
 
-2. Given the way [Paketo buildpacks are set up](https://github.com/paketo-buildpacks/rfcs/blob/main/text/python/0001-restructure.md), it would technically be possible to reuse their cpython or nodejs buildpacks. To do so for Python, the pythonutils buildpack in this repository would need to be modified to add all needed devcontainer.json contents, and then add a requirement specifying `build=true` and `launch=true` in the metadata. Other Paketo buildpacks could also be used in a similar way. 
+2. Furthermore, if the [image extension/Dockerfile proposal](https://github.com/buildpacks/spec/pull/307) goes through, a single "builder" could be used rather than separate ones for devcontainers and production. The primary reason for separate builders today is base image contents because that you cannot install common utilities without root access or access to folders outside of the layer folder.  This would work by using different sets of `[[order.group]]` entries in the builder. Dev container focused sets would include then need to include a "mode" buildpack at the start that only passes if the `BP_DCNB_BUILD_MODE` environment variable is set to "devcontainer". The steps in the `common-debian.sh` and `launcher-hack.sh` referenced in the Dockerfile could be contained inside this mode buildpack.
+
+2. Given the way [Paketo buildpacks are set up](https://github.com/paketo-buildpacks/rfcs/blob/main/text/python/0001-restructure.md), it would be possible to reuse their `cpython` or `nodejs` buildpacks. To do so for Python, the pythonutils buildpack in this repository would need to be modified to add all needed devcontainer.json contents, and then add a requirement specifying `build=true` and `launch=true` in the metadata. However, dev container mode would not be able to reuse their npm install or pip install buildpacks. A secondary buildpack would be needed to add devcontainer.json metadata in those cases. The `goutils` buildpack is a simplified example of this model.
