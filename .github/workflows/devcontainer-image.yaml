@@ -31,6 +31,7 @@ jobs:
         uses: stuartleeks/devcontainer-build-run@main
         with:
           imageName: ghcr.io/chuxel/devpacks/devcontainer
+          runCmd: echo "Image built successfully."
 
       - name: Publish image
         run: |
