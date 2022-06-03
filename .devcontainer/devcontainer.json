@@ -1,5 +1,5 @@
 {
-	"name": "manual-devpacks",
+	"name": "devpacks",
 	"image": "mcr.microsoft.com/vscode/devcontainers/base:0-bullseye",
 	"runArgs": ["--shm-size=1g"],
 	"extensions": [

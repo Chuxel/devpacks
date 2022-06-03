@@ -1,0 +1,39 @@
+name: 'Dev container image build'
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 1 * *'
+  push:
+    branches:
+      - 'devcontainer-test'
+      - 'main'
+    paths:
+      - '.devcontainer/image-build/**/*'
+      - '.github/workflows/devcontainer-image.yml'
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release-features:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1 
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image
+        uses: stuartleeks/devcontainer-build-run@main
+        with:
+          imageName: ghcr.io/chuxel/devpacks/devcontainer
+
+      - name: Publish image
+        run: |
+          docker push ghcr.io/chuxel/devpacks/devcontainer
+      
+ 
