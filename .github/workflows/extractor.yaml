@@ -18,6 +18,7 @@ jobs:
         uses: stuartleeks/devcontainer-build-run@main
         with:
           imageName: extractor-build
+          push: never
           runCmd: |
             set -e
             cd devpacks
