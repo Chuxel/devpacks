@@ -13,56 +13,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
-      - uses: actions/setup-go@v2
+      - uses: docker/setup-buildx-action@v1
+      - uses: docker/login-action@v1 
         with:
-          go-version: '1.17.10'
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-node@v2
+      - name: Build buildpacks, builders
+        uses: stuartleeks/devcontainer-build-run@main
         with:
-          node-version: '16.15.0'
- 
-      - name: Setup pack and devcontainer CLI
-        id: setup_pack_devcontainer_clis
-        run: |
+          imageName: buildpack-build
+          push: never
+          runCmd: |
           set -e
-          npm install -g @devcontainers/cli
-
-          pack_cli_version="0.26.0"
-          target_path="$HOME/.local/bin"
-
-          repo_url="https://github.com/buildpacks/pack"
-          filename="pack-v${pack_cli_version}-linux.tgz"
-          dl_url="${repo_url}/releases/download/v${pack_cli_version}/${filename}"
-          mkdir -p /tmp/pack-cli
-          curl -sSL "${dl_url}" > /tmp/pack-cli/${filename}
-          curl -sSL "${dl_url}.sha256" > /tmp/pack-cli/${filename}.sha256
-          cd /tmp/pack-cli
-          sha256sum --ignore-missing -c "${filename}.sha256"
-          mkdir -p "$target_path"
-          tar -f "${filename}" -C "${target_path}" --no-same-owner -xzv pack
-          rm -rf /tmp/pack-cli
-
-          export PATH="$PATH:$target_path"
-
-      - name: Docker login
-        id: docker_login
-        run: |
-          set -e
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u "${{ github.actor }}" --password-stdin ghcr.io
- 
-      - name: Package and publish devpack images
-        run: |
-          set -e
-          cd ${{ github.workspace }}/devpacks
+          cd devpacks
           go mod download
           make buildpacks
           make publish-buildpacks
-
-      - name: Publish builders
-        run: |
-          set -e
-          cd ${{ github.workspace }}/builders
+          cd ../builders
           ./create-builders.sh empty true
           ./create-builders.sh full true
 
