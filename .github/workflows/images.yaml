@@ -22,7 +22,7 @@ jobs:
  
       - name: Publish images
         run: |
-          ${{ github.workspace }}/images/build-stack-image.sh true
+          images/build-stack-image.sh true
           
       - name: Release
         uses: softprops/action-gh-release@v1
