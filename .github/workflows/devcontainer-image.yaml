@@ -20,6 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       
+      - uses: docker/setup-buildx-action@v1
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1 
         with:
@@ -31,7 +33,12 @@ jobs:
         uses: stuartleeks/devcontainer-build-run@main
         with:
           imageName: ghcr.io/chuxel/devpacks/devcontainer
+          skipContainerUserIdUpdate: true
           subFolder: .devcontainer/image-build
-          push: true
           runCmd: echo "Image built successfully."
+
+      - name: Publish image
+        run: |
+          docker push ghcr.io/chuxel/devpacks/devcontainer
+      
  
