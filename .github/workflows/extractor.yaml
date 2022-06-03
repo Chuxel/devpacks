@@ -9,7 +9,7 @@ permissions:
   packages: write
 
 jobs:
-  release-devpacks:
+  release-extractor:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

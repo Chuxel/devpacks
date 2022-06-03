@@ -9,7 +9,7 @@ permissions:
   packages: write
 
 jobs:
-  release-devpacks:
+  release-buildpacks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -26,14 +26,14 @@ jobs:
           imageName: buildpack-build
           push: never
           runCmd: |
-          set -e
-          cd devpacks
-          go mod download
-          make buildpacks
-          make publish-buildpacks
-          cd ../builders
-          ./create-builders.sh empty true
-          ./create-builders.sh full true
+            set -e
+            cd devpacks
+            go mod download
+            make buildpacks
+            make publish-buildpacks
+            cd ../builders
+            ./create-builders.sh empty true
+            ./create-builders.sh full true
 
       - name: Release
         uses: softprops/action-gh-release@v1

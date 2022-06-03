@@ -1,4 +1,4 @@
-name: 'Image release'
+name: 'Stack image release'
 on:
   workflow_dispatch:
   push:
@@ -9,7 +9,7 @@ permissions:
   packages: write
 
 jobs:
-  release-features:
+  release-stack-images:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -19,7 +19,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
+ 
       - name: Publish images
         run: |
           cd ${{ github.workspace }}/images
