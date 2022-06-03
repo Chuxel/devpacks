@@ -13,26 +13,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
-      - uses: actions/setup-go@v2
-        with:
-          go-version: '1.17.10'
 
-      - name: Build extractor
-        run: |
-          set -e
-          cd ${{ github.workspace }}/devpacks
-          go mod download
-          make build-extractor
-          cd bin/devcontainer-extractor
-          sha256sum \
-            ./devcontainer-extractor-linux-amd64 \
-            ./devcontainer-extractor-linux-arm64 \
-            ./devcontainer-extractor-darwin-amd64 \
-            ./devcontainer-extractor-darwin-arm64 \
-            ./devcontainer-extractor-windows-amd64.exe \
-            ./devcontainer-extractor-windows-arm64.exe \
-            > ./SHASUMS256.txt
+      - name: Build image
+        uses: stuartleeks/devcontainer-build-run@main
+        with:
+          imageName: ghcr.io/chuxel/devpacks/devcontainer
+          runCmd: |
+            set -e
+            cd ${{ github.workspace }}/devpacks
+            go mod download
+            make build-extractor
+            cd bin/devcontainer-extractor
+            sha256sum \
+              ./devcontainer-extractor-linux-amd64 \
+              ./devcontainer-extractor-linux-arm64 \
+              ./devcontainer-extractor-darwin-amd64 \
+              ./devcontainer-extractor-darwin-arm64 \
+              ./devcontainer-extractor-windows-amd64.exe \
+              ./devcontainer-extractor-windows-arm64.exe \
+              > ./SHASUMS256.txt
 
       - name: Release
         uses: softprops/action-gh-release@v1
