@@ -20,7 +20,7 @@ jobs:
           imageName: extractor-build
           runCmd: |
             set -e
-            cd ${{ github.workspace }}/devpacks
+            cd devpacks
             go mod download
             make build-extractor
             cd bin/devcontainer-extractor
