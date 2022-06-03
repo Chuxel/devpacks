@@ -5,7 +5,7 @@
 		"docker-in-docker": "latest",
 		"desktop-lite": "latest",
 		"golang": "1.17.10",
-		"node": "16.15.0",
+		"node": "16.15.1",
 		"chuxel/devcontainer-features/packcli": "latest",
 		"chuxel/devcontainer-features/vscode": {
 			"edition": "both"
