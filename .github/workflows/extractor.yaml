@@ -17,7 +17,7 @@ jobs:
       - name: Build image
         uses: stuartleeks/devcontainer-build-run@main
         with:
-          imageName: ghcr.io/chuxel/devpacks/devcontainer
+          imageName: extractor-build
           runCmd: |
             set -e
             cd ${{ github.workspace }}/devpacks
