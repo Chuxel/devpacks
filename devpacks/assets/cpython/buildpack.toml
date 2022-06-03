@@ -4,7 +4,7 @@ api = "0.7"
 # Buildpack ID and metadata
 [buildpack]
   id = "chuxel/devpacks/buildpack-cpython"
-  version = "v0.0.4"
+  version = "v0.0.5"
 
 # Stacks that the buildpack will work with
 [[stacks]]
