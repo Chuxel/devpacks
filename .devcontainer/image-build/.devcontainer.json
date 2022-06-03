@@ -11,5 +11,6 @@
 			"edition": "both"
 		},
 		"chuxel/devcontainer-features/googlechrome": "latest"
-	}
+	},
+	"remoteUser": "vscode"
 }

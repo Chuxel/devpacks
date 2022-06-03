@@ -15,7 +15,7 @@ permissions:
   packages: write
 
 jobs:
-  release-features:
+  build-image:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -31,10 +31,7 @@ jobs:
         uses: stuartleeks/devcontainer-build-run@main
         with:
           imageName: ghcr.io/chuxel/devpacks/devcontainer
+          subFolder: .devcontainer/image-build
+          push: true
           runCmd: echo "Image built successfully."
-
-      - name: Publish image
-        run: |
-          docker push ghcr.io/chuxel/devpacks/devcontainer
-      
  
