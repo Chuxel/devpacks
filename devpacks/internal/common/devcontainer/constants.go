@@ -3,8 +3,8 @@ package devcontainer
 const DEFAULT_CONTAINER_IMAGE_BUILD_MODE = "production"
 
 // Label and metadata keys
-const METADATA_ID_PREFIX = "dev.container"
-const DEVCONTAINER_JSON_LABEL_NAME = METADATA_ID_PREFIX + ".json"
+const METADATA_ID_PREFIX = "dev.containers"
+const DEVCONTAINER_JSON_LABEL_NAME = METADATA_ID_PREFIX + ".metadata"
 
 // ENV variables
 const CONTAINER_IMAGE_BUILD_MODE_ENV_VAR_NAME = "BP_DCNB_BUILD_MODE"

@@ -109,19 +109,19 @@ func (devContainer *DevContainer) ConvertUnsupportedPropertiesToRunArgs() {
 
 	if _, hasKey := devContainer.Properties["privileged"]; hasKey {
 		runArgs = utils.AddToSliceIfUnique(runArgs, "--privileged")
-		devContainer.Properties["privileged"] = nil
+		delete(devContainer.Properties, "privileged")
 	}
 
 	if _, hasKey := devContainer.Properties["init"]; hasKey {
 		runArgs = utils.AddToSliceIfUnique(runArgs, "--init")
-		devContainer.Properties["init"] = nil
+		delete(devContainer.Properties, "init")
 	}
 
 	if inter, hasKey := devContainer.Properties["capAdd"]; hasKey {
 		capAdd := utils.InterfaceToStringSlice(inter)
 		for _, cap := range capAdd {
 			runArgs = utils.AddToSliceIfUnique(runArgs, "--cap-add="+cap)
-			devContainer.Properties["capAdd"] = nil
+			delete(devContainer.Properties, "capAdd")
 		}
 	}
 
@@ -129,7 +129,7 @@ func (devContainer *DevContainer) ConvertUnsupportedPropertiesToRunArgs() {
 		capAdd := utils.InterfaceToStringSlice(inter)
 		for _, cap := range capAdd {
 			runArgs = utils.AddToSliceIfUnique(runArgs, "--security-op="+cap)
-			devContainer.Properties["securityOpt"] = nil
+			delete(devContainer.Properties, "securityOpt")
 		}
 	}
 
