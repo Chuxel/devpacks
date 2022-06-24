@@ -16,7 +16,7 @@ jobs:
       - uses: docker/setup-buildx-action@v1
 
       - name: Build buildpacks, builders
-        uses: stuartleeks/devcontainer-build-run@main
+        uses: devcontainers/ci@v0.2
         with:
           imageName: buildpack-build
           push: never
