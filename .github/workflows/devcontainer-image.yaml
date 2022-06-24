@@ -27,7 +27,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build image
-        uses: stuartleeks/devcontainer-build-run@main
+        uses: devcontainers/ci@v0.2
         with:
           imageName: ghcr.io/chuxel/devpacks/devcontainer
           skipContainerUserIdUpdate: true
