@@ -7,7 +7,7 @@ publish="${2:-false}"
 
 publisher="chuxel"
 repository="devpacks"
-version="0.0.6"
+version="0.0.7"
 
 mkdir -p /tmp/builder-tmp
 

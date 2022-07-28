@@ -4,7 +4,7 @@ api = "0.7"
 # Buildpack ID and metadata
 [buildpack]
   id = "chuxel/devpacks/buildpack-pipinstall"
-  version = "v0.0.6"
+  version = "v0.0.7"
 
 # Stacks that the buildpack will work with
 [[stacks]]
