@@ -69,7 +69,7 @@ The Buildpacks are written in Go and take advantage of [libcnb](https://pkg.go.d
 
 4. The buildpacks can optionally place a `devcontainer.json` snippet file in their layers and add the path to it in a common `FINALIZE_JSON_SEARCH_PATH` build-time environment variable for the layer. These devcontainer.json files can include tooling settings, runtime settings like adding capabilities (e.g. ptrace or privileged), or even lifecycle commands. They're only added in devcontainer mode.
 
-5. A `finalize` buildpack merges all devcontainer.json snippets from the `FINALIZE_JSON_SEARCH_PATH` and adds a `dev.containers.metadata` label on the image with their contents.
+5. A `finalize` buildpack adds all devcontainer.json snippets from the `FINALIZE_JSON_SEARCH_PATH` to an array and adds this as json in a `dev.containers.metadata` label on the image. It also sets `userEnvProbe` to `loginInteractiveShell` to ensure that environment variables from launcher update mentioned above is factored into any tooling processes.
 
 6. The `finalize` buildpack also removes the source code since this is expected to be mounted into the container when the image is used. As a result, `finalize` will fail detection in production mode and is last in the ordering in the devcontainer builder. It also overrides the default launch step to one that sleeps infinitely to prevent it from shutting down (though this last part is technically optional).
 

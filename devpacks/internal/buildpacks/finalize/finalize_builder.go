@@ -3,9 +3,9 @@ package finalize
 import (
 	_ "embed"
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/buildpacks/libcnb"
@@ -29,28 +29,21 @@ func (builder FinalizeBuilder) Build(context libcnb.BuildContext) (libcnb.BuildR
 
 	// This implementation assumes https://github.com/devcontainers/spec/issues/2 is done. We'll
 	// create a small utility to do the property conversion assuming these properties are missing.
-	mergedDevContainerJson := devcontainer.DevContainer{Properties: make(map[string]interface{})}
 	devcontainerJsonSearchPath := os.Getenv(devcontainer.FINALIZE_JSON_SEARCH_PATH_ENV_VAR_NAME)
 	devcontainerJsonLocs := filepath.SplitList(devcontainerJsonSearchPath)
+	labelContents := make([]map[string]interface{}, 0)
 	// For each path in search list and merge properties
 	for _, loc := range devcontainerJsonLocs {
-		devContainer := devcontainer.NewDevContainer(loc)
-		mergedDevContainerJson.Merge(devContainer)
-	}
-	// Force userEnvProbe to something other than "none" - needed so env vars are picked up
-	userEnvProbe := "loginInteractiveShell"
-	existingEnvProbeIntr, hasKey := mergedDevContainerJson.Properties["userEnvProbe"]
-	if hasKey {
-		existingEnvProbe := fmt.Sprint(existingEnvProbeIntr)
-		if existingEnvProbe != "none" {
-			userEnvProbe = existingEnvProbe
+		if _, err := os.Stat(path.Join(loc, "devcontainer.json")); err == nil {
+			labelContents = append(labelContents, devcontainer.NewDevContainer(loc).Properties)
 		}
 	}
-	mergedDevContainerJson.Properties["userEnvProbe"] = userEnvProbe
+	// Force userEnvProbe to something other than "none" - needed so env vars are picked up
+	labelContents = append(labelContents, map[string]interface{}{"userEnvProbe": "loginInteractiveShell"})
 
 	// Add the result to the label
-	log.Println("Applying merged json content to label ", devcontainer.DEVCONTAINER_JSON_LABEL_NAME)
-	devContainerJsonBytes, err := json.Marshal(mergedDevContainerJson.Properties)
+	log.Println("Adding dev container metadata content to label ", devcontainer.DEVCONTAINER_JSON_LABEL_NAME)
+	devContainerJsonBytes, err := json.Marshal(labelContents)
 	if err != nil {
 		log.Fatal(err)
 	}
