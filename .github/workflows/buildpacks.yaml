@@ -22,6 +22,7 @@ jobs:
           push: never
           runCmd: |
             set -e
+            /usr/local/share/docker-init.sh
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u "${{ github.actor }}" --password-stdin ghcr.io
             cd devpacks
             go mod download
