@@ -1,7 +1,7 @@
 {
 	"name": "devpacks",
 	"image": "ghcr.io/chuxel/devpacks/devcontainer",
-	"runArgs": ["--shm-size=1g"],
+	"runArgs": ["--shm-size=1g", "--privileged"],
 	"extensions": [
 		"mads-hartmann.bash-ide-vscode",
 		"rogalmic.bash-debug",
