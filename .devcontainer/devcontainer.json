@@ -19,14 +19,7 @@
 	"remoteUser": "vscode",
 	"features": {
 		"docker-in-docker": "latest",
-		"desktop-lite": "latest",
-		"golang": "1.17.10",
-		"node": "16.15.1",
-		"chuxel/devcontainer-features/packcli": "latest",
-		"chuxel/devcontainer-features/vscode": {
-			"edition": "both"
-		},
-		"chuxel/devcontainer-features/googlechrome": "latest"
+		"desktop-lite": "latest"
 	},
 	"postCreateCommand": "sudo chmod -R g+rw /usr/local/share/nvm/versions && npm install --location=global @devcontainers/cli npm"
 }
