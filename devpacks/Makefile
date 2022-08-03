@@ -17,7 +17,7 @@ buildpacks: build-buildpacks package-buildpacks
 build-buildpacks:
 	for buildpack in $(buildpacks); do \
 		for stage in $(buildpack-stages); do \
-			go build -o ./bin/$$buildpack/bin/$$stage ./cmd/$$buildpack/$$stage/main.go; \
+			GOARCH="amd64" GOOS="linux" go build -o ./bin/$$buildpack/bin/$$stage ./cmd/$$buildpack/$$stage/main.go; \
 		done; \
 		cp -fR ./assets/$$buildpack/* ./bin/$$buildpack/ || echo No assets to copy.; \
 	done
