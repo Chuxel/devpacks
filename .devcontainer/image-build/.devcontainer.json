@@ -8,11 +8,29 @@
 			"version": "1.17.10"
 		},
 		"ghcr.io/devcontainers/features/node": {},
-		"chuxel/devcontainer-features/packcli": {},
-		"chuxel/devcontainer-features/vscode": {
+		"ghcr.io/chuxel/feature-library/packcli": {},
+		"ghcr.io/chuxel/feature-library/vscode": {
 			"edition": "both"
 		},
-		"chuxel/devcontainer-features/googlechrome": {}
+		"ghcr.io/chuxel/feature-library/googlechrome": {}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"mads-hartmann.bash-ide-vscode",
+				"rogalmic.bash-debug",
+				"ms-azuretools.vscode-docker",
+				"EditorConfig.EditorConfig",
+				"streetsidesoftware.code-spell-checker"
+			]		
+		}
+	},
+	"forwardPorts": [6080],
+	"portsAttributes": {
+		"6080": {
+			"label": "Desktop web client",
+			"onAutoForward": "ignore"
+		}
 	},
 	"remoteUser": "vscode"
 }

@@ -2,23 +2,5 @@
 	"name": "devpacks",
 	"image": "ghcr.io/chuxel/devpacks/devcontainer",
 	"runArgs": ["--shm-size=1g"],
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"mads-hartmann.bash-ide-vscode",
-				"rogalmic.bash-debug",
-				"ms-azuretools.vscode-docker",
-				"EditorConfig.EditorConfig",
-				"streetsidesoftware.code-spell-checker"
-			]		
-		}
-	},
-	"forwardPorts": [6080],
-	"portsAttributes": {
-		"6080": {
-			"label": "Desktop web client",
-			"onAutoForward": "ignore"
-		}
-	},
 	"postCreateCommand": "sudo chmod -R g+rw /usr/local/share/nvm/versions && npm install --location=global @devcontainers/cli npm"
 }
