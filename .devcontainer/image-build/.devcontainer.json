@@ -12,7 +12,7 @@
 		"ghcr.io/chuxel/feature-library/vscode": {
 			"edition": "both"
 		},
-		"ghcr.io/chuxel/feature-library/googlechrome": {}
+		"ghcr.io/chuxel/feature-library/google-chrome": {}
 	},
 	"customizations": {
 		"vscode": {
