@@ -4,7 +4,7 @@
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker": {},
 		"ghcr.io/devcontainers/features/desktop-lite": {},
-		"ghcr.io/devcontainers/features/golang": {
+		"ghcr.io/devcontainers/features/go": {
 			"version": "1.17.10"
 		},
 		"ghcr.io/devcontainers/features/node": {},
