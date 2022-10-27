@@ -8,7 +8,7 @@
 			"version": "1.17.10"
 		},
 		"ghcr.io/devcontainers/features/node": {},
-		"ghcr.io/chuxel/feature-library/packc-li": {},
+		"ghcr.io/chuxel/feature-library/pack-cli": {},
 		"ghcr.io/chuxel/feature-library/vscode": {
 			"edition": "both"
 		},
