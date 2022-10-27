@@ -32,5 +32,6 @@
 			"onAutoForward": "ignore"
 		}
 	},
-	"remoteUser": "vscode"
+	"remoteUser": "vscode",
+	"postCreateCommand": "sudo chmod -R g+rw /usr/local/share/nvm/versions && npm install --location=global @devcontainers/cli npm"
 }
