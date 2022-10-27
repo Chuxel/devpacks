@@ -2,15 +2,17 @@
 	"name": "devpacks",
 	"image": "mcr.microsoft.com/vscode/devcontainers/base:0-bullseye",
 	"features": {
-		"docker-in-docker": "latest",
-		"desktop-lite": "latest",
-		"golang": "1.17.10",
-		"node": "16.15.1",
-		"chuxel/devcontainer-features/packcli": "latest",
+		"ghcr.io/devcontainers/features/docker-in-docker": {},
+		"ghcr.io/devcontainers/features/desktop-lite": {},
+		"ghcr.io/devcontainers/features/golang": {
+			"version": "1.17.10"
+		},
+		"ghcr.io/devcontainers/features/node": {},
+		"chuxel/devcontainer-features/packcli": {},
 		"chuxel/devcontainer-features/vscode": {
 			"edition": "both"
 		},
-		"chuxel/devcontainer-features/googlechrome": "latest"
+		"chuxel/devcontainer-features/googlechrome": {}
 	},
 	"remoteUser": "vscode"
 }
