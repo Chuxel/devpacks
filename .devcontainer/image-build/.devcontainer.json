@@ -18,6 +18,7 @@
 		"vscode": {
 			"extensions": [
 				"mads-hartmann.bash-ide-vscode",
+				"ms-vscode.makefile-tools",
 				"rogalmic.bash-debug",
 				"ms-azuretools.vscode-docker",
 				"EditorConfig.EditorConfig",
