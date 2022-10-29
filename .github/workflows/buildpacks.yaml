@@ -22,14 +22,11 @@ jobs:
           push: never
           runCmd: |
             set -e
-            docker ps
-            /usr/local/share/docker-init.sh
-            docker ps
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u "${{ github.actor }}" --password-stdin ghcr.io
             cd devpacks
             go mod download
-            make buildpacks
-            make publish-buildpacks
+            make build-buildpacks
+            make package-and-publish-buildpacks            
             cd ../builders
             ./create-builders.sh empty true
             ./create-builders.sh full true

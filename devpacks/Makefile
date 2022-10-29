@@ -27,7 +27,7 @@ package-buildpacks:
 		pack buildpack package "$(registry)/$(publisher)/$(repository)/buildpack-$$buildpack" --pull-policy if-not-present -p ./bin/$$buildpack; \
 	done
 
-publish-buildpacks:
+package-and-publish-buildpacks:
 	for buildpack in $(buildpacks); do \
-		docker push "$(registry)/$(publisher)/$(repository)/buildpack-$$buildpack"; \
+		pack buildpack package --publish "$(registry)/$(publisher)/$(repository)/buildpack-$$buildpack" --pull-policy if-not-present -p ./bin/$$buildpack; \
 	done
