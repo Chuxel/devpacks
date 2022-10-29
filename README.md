@@ -16,13 +16,12 @@ Repo contents:
 1. **[devpacks](devpacks)**: Code to create a set of buildpacks (e.g., see `devpacks/internal/buildpacks`). Build using `make`.
 2. **[images](images)**: A Dockerfile and related content to generate a set of [stack images](https://buildpacks.io/docs/operator-guide/create-a-stack/).
 3. **[builders](builders)**: Config needed to create two [builders](https://buildpacks.io/docs/operator-guide/create-a-builder/) that include (1) and (2).
-4. **[devpacks/cmd/devcontainer-extractor](devpacks/cmd/devcontainer-extractor)** A utility to generate a `devcontainer.json` file from the output of one of the builders
 
 The resulting `ghcr.io/chuxel/devpacks/builder-prod-full` builder behaves like a typical buildpack, while `ghcr.io/chuxel/devpacks/builder-devcontainer-full` instead focuses on creating a dev container image that is similar to production.
 
 These builders can be used with the [`pack` CLI](https://buildpacks.io/docs/tools/pack/) or other CNB v3 compliant tools. 
 
-An extractor utility (see [releases](https://github.com/Chuxel/devpacks/releases)) can then be used to generate `devcontainer.json` or (merge contents with an existing file) for images output by the `builder-devcontainer-full` builder. The resulting devcontainer.json will contain any needed tooling or runtime metadata - including relevant lifecycle script properties like `postCreateCommand` (e.g. `npm install`). It will also add a reference to the specified image to the json file as long as no Dockerfile or Docker Compose file is referenced - as long as no existing Dockerfile or Docker Compose file is referenced in the local `devcontainer.json` file. This allows developers to add additional metadata and settings to the devcontainer.json file not supported by the buildpack (including dev container features).
+Now that [label support](https://github.com/devcontainers/spec/issues/18) for the dev container spec has been implemented, the extractor utility that was in this repository is no longer required. The resulting image contains all needed devcontainer.json metadata thanks fo a "finalize" Buildpack that adds devcontainer.json content from each Buildpack to the `devcontainer.metadata` label.
 
 Right now it supports basic Node.js apps with a `start` script in `package.json`, basic Python 3 applications that use `pip` (and thus have a `requirements.txt` file), building Go apps/services. The Go and Python apps need to include a [`Procfile`](https://devcenter.heroku.com/articles/procfile) with a `web` entry to specify the startup command.
 
@@ -53,13 +52,13 @@ Each buildpack in this repository demos something slightly different.
     - `pythonutils` - Demonstrates a devcontainer mode only step to install tools like `pylint` that you would not want in prod mode.
 - `goutils` - Demonstrates a devcontainer mode only buildpack that can depend on a [completely external Paketo buildpack](https://github.com/paketo-buildpacks/go-dist) to acquire Go itself, then install tools needed for developing. This buildpack also adds all needed devcontainer.json metadata for go development including setting the ptrace capability for debugging. The [full Go Paketo buildpack set](https://github.com/paketo-buildpacks/go) is then used in the prod builder.
 - `procfile` - Demos creating a launch command while in production mode from a [`Procfile`](https://devcenter.heroku.com/articles/procfile).
-- `finalize` - Demonstrates processing of accumulating devcontainer.json metadata from multiple buildpacks, placing it in a label, cleaning out the source tree, and adding a launch command that prevents the container from terminating by default.
+- `finalize` - Demonstrates processing of accumulating devcontainer.json metadata from multiple Buildpacks, placing it in the `devcontainer.metadata` label, cleaning out the source tree, and adding a launch command that prevents the container from terminating by default.
 
 ## How it works
 
 The Buildpacks are written in Go and take advantage of [libcnb](https://pkg.go.dev/github.com/buildpacks/libcnb) to simplify interop with the buildpack spec. Here's how the different pieces in this repository work together:
 
-1. The base images for the `prod` and `devcontainer` builders are constructed using a multi-stage Dockerfile with later dev container stages adding more base content - they are therefore a superset of the prod images. The main reason for two sets of images is that the devcontainer image includes a number of utilities like htop, ps, zsh, etc. Installing these OS utilities requires root access, which is not allowed today. (However, a [proposal](https://github.com/buildpacks/spec/pull/307) could help with this long term so that these become part of a buildpack instead.)
+1. The base images for the `prod` and `devcontainer` builders are constructed using a multi-stage Dockerfile with later dev container stages adding more base content - they are therefore a superset of the prod images. The main reason for two sets of images is that the devcontainer image includes a number of utilities like htop, ps, zsh, etc. Installing these OS utilities requires root access, which is not allowed today. (However, an upcoming ["image extension" capability](https://github.com/buildpacks/spec/blob/buildpack/0.9/image_extension.md) could help with this long term so that these become part of a buildpack instead.)
 
 2. The devcontainer base images also include updates to rc/profile files to handle the fact that any Buildpack injected environment variables are not available to "docker exec" (or other CLI). Only the sub-processes of the entrypoint get the environmant variables buildpacks add by default, and interacting with the dev container is typically done using commands like exec. See [launcher-hack.sh](images/scripts/launcher-hack.sh) for details. This is **critical** to ensuring things work in the dev container context. Here again, this is in the image since buildpacks cannot modify contents outside of their specific layer folders either.
 
@@ -69,22 +68,18 @@ The Buildpacks are written in Go and take advantage of [libcnb](https://pkg.go.d
 
 4. The buildpacks can optionally place a `devcontainer.json` snippet file in their layers and add the path to it in a common `FINALIZE_JSON_SEARCH_PATH` build-time environment variable for the layer. These devcontainer.json files can include tooling settings, runtime settings like adding capabilities (e.g. ptrace or privileged), or even lifecycle commands. They're only added in devcontainer mode.
 
-5. A `finalize` buildpack adds all devcontainer.json snippets from the `FINALIZE_JSON_SEARCH_PATH` to an array and adds this as json in a `dev.containers.metadata` label on the image. It also sets `userEnvProbe` to `loginInteractiveShell` to ensure that environment variables from launcher update mentioned above is factored into any tooling processes.
+5. A `finalize` buildpack adds all devcontainer.json snippets from the `FINALIZE_JSON_SEARCH_PATH` to an array and adds this as json in a `devcontainer.metadata` label on the image. It also sets `userEnvProbe` to `loginInteractiveShell` to ensure that environment variables from launcher update mentioned above is factored into any tooling processes.
 
 6. The `finalize` buildpack also removes the source code since this is expected to be mounted into the container when the image is used. As a result, `finalize` will fail detection in production mode and is last in the ordering in the devcontainer builder. It also overrides the default launch step to one that sleeps infinitely to prevent it from shutting down (though this last part is technically optional).
 
 7. A specific set of these buildpacks are then added to the [devcontainer](builders/full/builder-devcontainer.toml) and [prod](builders/full/builder-prod.toml) builder, with finalize being the last step for the devcontainer one.
 
-6. Since the dev container CLI (and related products like VS Code Remote - Containers and Codespaces) do not support consuming dev container metadata from an image label yet, an extractor utility (see `devpacks/cmd/devcontainer-extractor`) extracts metadata from the image and merges it with a local devcontainer.json file if one is found (creating `devcontainer.json.merged`). 
-
-7. The extractor also translates properties proposed in https://github.com/devcontainers/spec/issues/2 to `runArgs` equivalents as a stop gap.
-
 That's the scoop!
 
 ## Notes and problems not solved
 
-1. Buildpacks cannot install anything that requires root access or modify contents outside of the specified layer folder (which isn't a Docker layer in and of itself). There's a [image extension/Dockerfile proposal](https://github.com/buildpacks/spec/pull/307) that could enable it.
+1. Buildpacks cannot install anything that requires root access or modify contents outside of the specified layer folder (which isn't a Docker layer in and of itself). There's a [image extension/Dockerfile capability coming in spec 0.9](https://github.com/buildpacks/spec/pull/307) that could enable it.
 
-2. Furthermore, if the [image extension/Dockerfile proposal](https://github.com/buildpacks/spec/pull/307) goes through, a single "builder" could be used rather than separate ones for devcontainers and production. The primary reason for separate builders today is base image contents because that you cannot install common utilities without root access or access to folders outside of the layer folder.  This would work by using different sets of `[[order.group]]` entries in the builder. Dev container focused sets would include then need to include a "mode" buildpack at the start that only passes if the `BP_DCNB_BUILD_MODE` environment variable is set to "devcontainer". The steps in the `common-debian.sh` and `launcher-hack.sh` referenced in the Dockerfile could be contained inside this mode buildpack.
+2. Furthermore, if this image extension capability would allow for a a single "builder" could be used rather than separate ones for devcontainers and production. The primary reason for separate builders today is base image contents because that you cannot install common utilities without root access or access to folders outside of the layer folder.  This would work by using different sets of `[[order.group]]` entries in the builder. Dev container focused sets would include then need to include a "mode" buildpack at the start that only passes if the `BP_DCNB_BUILD_MODE` environment variable is set to "devcontainer". The steps in the `common-debian.sh` and `launcher-hack.sh` referenced in the Dockerfile could be contained inside this mode buildpack.
 
 2. Given the way [Paketo buildpacks are set up](https://github.com/paketo-buildpacks/rfcs/blob/main/text/python/0001-restructure.md), it would be possible to reuse their `cpython` or `nodejs` buildpacks. To do so for Python, the pythonutils buildpack in this repository would need to be modified to add all needed devcontainer.json contents, and then add a requirement specifying `build=true` and `launch=true` in the metadata. However, dev container mode would not be able to reuse their npm install or pip install buildpacks. A secondary buildpack would be needed to add devcontainer.json metadata in those cases. The `goutils` buildpack is a simplified example of this model.

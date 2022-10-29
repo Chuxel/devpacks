@@ -6,9 +6,9 @@ buildpack-stages = build detect
 extractor-archs = amd64 arm64
 extractor-os = linux darwin windows
 
-all: buildpacks build-extractor
+all: buildpacks
 
-build: build-buildpacks build-extractor
+build: build-buildpacks 
 
 package: package-buildpacks
 
@@ -21,17 +21,6 @@ build-buildpacks:
 		done; \
 		cp -fR ./assets/$$buildpack/* ./bin/$$buildpack/ || echo No assets to copy.; \
 	done
-
-build-extractor:
-	for os in $(extractor-os); do \
-		for arch in $(extractor-archs); do \
-			GOARCH="$$arch" GOOS="$$os" go build -o ./bin/devcontainer-extractor/devcontainer-extractor-$$os-$$arch ./cmd/devcontainer-extractor/main.go; \
-		done; \
-	done
-	for arch in $(extractor-archs); do \
-		rm -f ./bin/devcontainer-extractor/devcontainer-extractor-windows-$$arch.exe; \
-		mv ./bin/devcontainer-extractor/devcontainer-extractor-windows-$$arch ./bin/devcontainer-extractor/devcontainer-extractor-windows-$$arch.exe; \
-	done; \
 
 package-buildpacks:
 	for buildpack in $(buildpacks); do \
